@@ -105,6 +105,28 @@
   </div>
 </div>
 
+  <!-- New Invoice Modal -->
+<div id="invoiceModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+  <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+    <h3 class="text-lg font-semibold mb-4">Create Invoice</h3>
+    <div class="space-y-3">
+      <input id="invName" type="text" placeholder="Patient Name" class="w-full px-3 py-2 border rounded-md" />
+      <input id="invService" type="text" placeholder="Service" class="w-full px-3 py-2 border rounded-md" />
+      <input id="invAmount" type="number" placeholder="Amount" class="w-full px-3 py-2 border rounded-md" />
+      <select id="invStatus" class="w-full px-3 py-2 border rounded-md">
+        <option value="Invoice">Invoice</option>
+        <option value="Paid">Paid</option>
+        <option value="Overdue">Overdue</option>
+      </select>
+    </div>
+    <div class="mt-4 flex justify-end gap-2">
+      <button onclick="closeModal()" class="px-4 py-2 border rounded-md">Cancel</button>
+      <button onclick="addInvoice()" class="px-4 py-2 bg-rose-600 text-white rounded-md">Add</button>
+    </div>
+  </div>
+</div>
+
+
 <script src="https://cdn.jsdelivr.net/npm/qrious/dist/qrious.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -123,25 +145,26 @@
   function render(list){
     const ul = document.getElementById('invoiceList');
     ul.innerHTML = '';
-    list.forEach(inv => {
-      const initials = inv.name.split(' ').map(s=>s[0]).slice(0,2).join('');
-      const li = document.createElement('li');
-      li.className = 'flex items-center justify-between';
-      li.innerHTML = `
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center font-semibold">${initials}</div>
-          <div>
-            <div class="font-medium">${inv.name}</div>
-            <div class="text-xs text-gray-500">${inv.service} — ${inv.date}</div>
-          </div>
-        </div>
-        <div class="text-right">
-          <div class="text-sm font-semibold">$${inv.amount}</div>
-          <div class="text-xs ${inv.status==='Paid'?'text-green-600':inv.status==='Overdue'?'text-rose-600':'text-amber-600'}">${inv.status}</div>
-        </div>
-      `;
-      ul.appendChild(li);
-    });
+   list.forEach((inv, index) => {
+  const initials = inv.name.split(' ').map(s=>s[0]).slice(0,2).join('');
+  const li = document.createElement('li');
+  li.className = 'flex items-center justify-between cursor-pointer hover:bg-gray-50 px-2 py-2 rounded-md';
+  li.innerHTML = `
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center font-semibold">${initials}</div>
+      <div>
+        <div class="font-medium">${inv.name}</div>
+        <div class="text-xs text-gray-500">${inv.service} — ${inv.date}</div>
+      </div>
+    </div>
+    <div class="text-right">
+      <div class="text-sm font-semibold">$${inv.amount}</div>
+      <div class="text-xs ${inv.status==='Paid'?'text-green-600':inv.status==='Overdue'?'text-rose-600':'text-amber-600'}">${inv.status}</div>
+    </div>
+  `;
+  li.addEventListener('click', () => showInvoice(index));
+  ul.appendChild(li);
+});
     updateSummary();
   }
 
