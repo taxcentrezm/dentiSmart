@@ -132,128 +132,181 @@
 
 
   <!-- Scripts -->
-  <script>
+<script>
   feather.replace();
 
-  let invoices = [
-    {name:'Alice Mukuka', service:'Cleaning', amount:120, date:'Oct 01', status:'Paid'},
-    {name:'Brian Zulu', service:'Root Canal', amount:450, date:'Sep 28', status:'Invoice'},
-    {name:'Nadine Clarke', service:'Crown Fitting', amount:320, date:'Sep 25', status:'Overdue'}
-  ];
+  let invoices = [];
 
-  function render(list){
+  // Load invoices from localStorage
+  function loadInvoices() {
+    const stored = localStorage.getItem('smartdent_invoices');
+    if (stored) {
+      invoices = JSON.parse(stored);
+    } else {
+      invoices = [
+        { id: 'INV-0001', name: 'Alice Mukuka', service: 'Cleaning', amount: 120, date: 'Oct 01', status: 'Paid' },
+        { id: 'INV-0002', name: 'Brian Zulu', service: 'Root Canal', amount: 450, date: 'Sep 28', status: 'Invoice' },
+        { id: 'INV-0003', name: 'Nadine Clarke', service: 'Crown Fitting', amount: 320, date: 'Sep 25', status: 'Overdue' }
+      ];
+      saveInvoices();
+    }
+  }
+
+  // Save invoices to localStorage
+  function saveInvoices() {
+    localStorage.setItem('smartdent_invoices', JSON.stringify(invoices));
+  }
+
+  // Render invoice list
+  function render(list = invoices) {
     const ul = document.getElementById('invoiceList');
     ul.innerHTML = '';
-   list.forEach((inv, index) => {
-  const initials = inv.name.split(' ').map(s=>s[0]).slice(0,2).join('');
-  const li = document.createElement('li');
-  li.className = 'flex items-center justify-between cursor-pointer hover:bg-gray-50 px-2 py-2 rounded-md';
-  li.innerHTML = `
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center font-semibold">${initials}</div>
-      <div>
-        <div class="font-medium">${inv.name}</div>
-        <div class="text-xs text-gray-500">${inv.service} — ${inv.date}</div>
-      </div>
-    </div>
-    <div class="text-right">
-      <div class="text-sm font-semibold">$${inv.amount}</div>
-      <div class="text-xs ${inv.status==='Paid'?'text-green-600':inv.status==='Overdue'?'text-rose-600':'text-amber-600'}">${inv.status}</div>
-    </div>
-  `;
-  li.addEventListener('click', () => showInvoice(index));
-  ul.appendChild(li);
-});
+    list.forEach((inv, index) => {
+      const initials = inv.name.split(' ').map(s => s[0]).slice(0, 2).join('');
+      const li = document.createElement('li');
+      li.className = 'flex items-center justify-between cursor-pointer hover:bg-gray-50 px-2 py-2 rounded-md';
+      li.innerHTML = `
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center font-semibold">${initials}</div>
+          <div>
+            <div class="font-medium">${inv.name}</div>
+            <div class="text-xs text-gray-500">${inv.service} — ${inv.date}</div>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-sm font-semibold">$${inv.amount}</div>
+          <div class="text-xs ${inv.status === 'Paid' ? 'text-green-600' : inv.status === 'Overdue' ? 'text-rose-600' : 'text-amber-600'}">${inv.status}</div>
+        </div>
+      `;
+      li.addEventListener('click', () => showInvoice(index));
+      ul.appendChild(li);
+    });
     updateSummary();
   }
 
-  function updateSummary(){
+  // Update billing summary
+  function updateSummary() {
     let total = 0, paid = 0, overdue = 0;
     invoices.forEach(i => {
       total += i.amount;
-      if(i.status === 'Paid') paid += i.amount;
-      if(i.status === 'Overdue') overdue += i.amount;
+      if (i.status === 'Paid') paid += i.amount;
+      if (i.status === 'Overdue') overdue += i.amount;
     });
-    document.querySelector('.card ul').innerHTML = `
-      <li class="flex justify-between"><span>Total Billed</span><span>$${total.toLocaleString()}</span></li>
-      <li class="flex justify-between text-green-600"><span>Paid</span><span>$${paid.toLocaleString()}</span></li>
-      <li class="flex justify-between text-rose-600"><span>Overdue</span><span>$${overdue.toLocaleString()}</span></li>
-    `;
+    const summary = document.getElementById('billingSummary');
+    if (summary) {
+      summary.innerHTML = `
+        <li class="flex justify-between"><span>Total Billed</span><span>$${total.toLocaleString()}</span></li>
+        <li class="flex justify-between text-green-600"><span>Paid</span><span>$${paid.toLocaleString()}</span></li>
+        <li class="flex justify-between text-rose-600"><span>Overdue</span><span>$${overdue.toLocaleString()}</span></li>
+      `;
+    }
   }
 
-  function openModal(){
-    document.getElementById('invoiceModal').style.display = 'flex';
+  // Modal controls
+  function openModal() {
+    const modal = document.getElementById('invoiceModal');
+    if (modal) modal.style.display = 'flex';
   }
 
-  function closeModal(){
-    document.getElementById('invoiceModal').style.display = 'none';
+  function closeModal() {
+    const modal = document.getElementById('invoiceModal');
+    if (modal) modal.style.display = 'none';
   }
 
-function addInvoice() {
-  const nameEl = document.getElementById('invName');
-  const serviceEl = document.getElementById('invService');
-  const amountEl = document.getElementById('invAmount');
-  const statusEl = document.getElementById('invStatus');
-
-  if (!nameEl || !serviceEl || !amountEl || !statusEl) {
-    alert('Invoice form is incomplete or missing.');
-    return;
+  function closeInvoice() {
+    const modal = document.getElementById('invoiceDetail');
+    if (modal) modal.style.display = 'none';
   }
 
-  const name = nameEl.value.trim();
-  const service = serviceEl.value.trim();
-  const amount = parseFloat(amountEl.value);
-  const status = statusEl.value;
+  // Add new invoice
+  function addInvoice() {
+    const nameEl = document.getElementById('invName');
+    const serviceEl = document.getElementById('invService');
+    const amountEl = document.getElementById('invAmount');
+    const statusEl = document.getElementById('invStatus');
 
-  if (!name || !service || isNaN(amount)) {
-    alert('Please fill all fields correctly.');
-    return;
+    if (!nameEl || !serviceEl || !amountEl || !statusEl) {
+      alert('Invoice form is incomplete or missing.');
+      return;
+    }
+
+    const name = nameEl.value.trim();
+    const service = serviceEl.value.trim();
+    const amount = parseFloat(amountEl.value);
+    const status = statusEl.value;
+
+    if (!name || !service || isNaN(amount)) {
+      alert('Please fill all fields correctly.');
+      return;
+    }
+
+    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+    const id = 'INV-' + (invoices.length + 1).toString().padStart(4, '0');
+    invoices.unshift({ id, name, service, amount, date: today, status });
+    saveInvoices();
+    closeModal();
+    render(invoices);
   }
 
-  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
-  invoices.unshift({ name, service, amount, date: today, status });
-  closeModal();
-  render(invoices);
-}
+  // Show invoice detail
+  function showInvoice(index) {
+    const inv = invoices[index];
+    document.getElementById('invId').textContent = inv.id;
+    document.getElementById('invDate').textContent = `Date: ${inv.date}`;
+    document.getElementById('invName').textContent = inv.name;
+    document.getElementById('invService').textContent = inv.service;
+    document.getElementById('invAmount').textContent = inv.amount;
 
-    function showInvoice(index){
-  const inv = invoices[index];
-  document.getElementById('invId').textContent = (index + 1).toString().padStart(4, '0');
-  document.getElementById('invDate').textContent = `Date: ${inv.date}`;
-  document.getElementById('invName').textContent = inv.name;
-  document.getElementById('invService').textContent = inv.service;
-  document.getElementById('invAmount').textContent = inv.amount;
-  const statusEl = document.getElementById('invStatus');
-  statusEl.textContent = inv.status;
-  statusEl.className = `mt-2 inline-block px-3 py-1 rounded-full text-xs font-medium ${
-    inv.status === 'Paid' ? 'bg-green-100 text-green-600' :
-    inv.status === 'Overdue' ? 'bg-rose-100 text-rose-600' :
-    'bg-amber-100 text-amber-600'
-  }`;
-  document.getElementById('invoiceDetail').style.display = 'flex';
+    const statusEl = document.getElementById('invStatus');
+    statusEl.textContent = inv.status;
+    statusEl.className = `mt-2 inline-block px-3 py-1 rounded-full text-xs font-medium ${
+      inv.status === 'Paid' ? 'bg-green-100 text-green-600' :
+      inv.status === 'Overdue' ? 'bg-rose-100 text-rose-600' :
+      'bg-amber-100 text-amber-600'
+    }`;
 
-  // QR code generation
-  const qr = new QRious({
-    element: document.getElementById('qrCode'),
-    value: `https://smartdent.com/invoice/${index + 1}`,
-    size: 120
+    document.getElementById('invoiceDetail').style.display = 'flex';
+
+    new QRious({
+      element: document.getElementById('qrCode'),
+      value: `https://smartdent.com/invoice/${inv.id}`,
+      size: 120
+    });
+  }
+
+  // Export invoice to PDF
+  function exportInvoice() {
+    html2canvas(document.getElementById('invoiceContent')).then(canvas => {
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF();
+      pdf.addImage(imgData, 'PNG', 10, 10, 190, 0);
+      pdf.save('SmartDent-Invoice.pdf');
+    });
+  }
+
+  // Mark invoice as paid
+  function markInvoiceAsPaid(index) {
+    invoices[index].status = 'Paid';
+    saveInvoices();
+    render();
+  }
+
+  // Search functionality
+  document.getElementById('searchBtn')?.addEventListener('click', () => {
+    const q = document.getElementById('searchInput')?.value.toLowerCase();
+    render(invoices.filter(i =>
+      i.name.toLowerCase().includes(q) || i.service.toLowerCase().includes(q)
+    ));
   });
-}
 
-function closeInvoice(){
-  document.getElementById('invoiceDetail').style.display = 'none';
-}
+  // Connect modal button
+  document.getElementById('newInvoiceBtn')?.addEventListener('click', openModal);
 
-function exportInvoice(){
-  html2canvas(document.getElementById('invoiceContent')).then(canvas => {
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF();
-    pdf.addImage(imgData, 'PNG', 10, 10, 190, 0);
-    pdf.save('SmartDent-Invoice.pdf');
-  });
-}
-
+  // Load and render
+  loadInvoices();
+  render();
 </script>
+
   <script src="core.js"></script>
 </body>
 </html>
