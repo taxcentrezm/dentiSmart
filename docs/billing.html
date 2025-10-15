@@ -25,7 +25,7 @@
         <div class="font-semibold text-lg">SmartDent ERP</div>
       </div>
       <div class="flex items-center gap-3">
-        <button class="bg-white/90 text-rose-600 px-3 py-2 rounded-md inline-flex items-center gap-2 shadow-sm">
+        <button id="newInvoiceBtn" class="bg-white/90 text-rose-600 px-3 py-2 rounded-md inline-flex items-center gap-2 shadow-sm">
           <i data-feather="file-plus"></i> New Invoice
         </button>
         <div class="relative">
@@ -184,7 +184,7 @@
     render(invoices.filter(i => i.name.toLowerCase().includes(q) || i.service.toLowerCase().includes(q)));
   });
 
-  document.querySelector('button:contains("New Invoice")')?.addEventListener('click', openModal);
+document.getElementById('newInvoiceBtn')?.addEventListener('click', openModal);
 
   render(invoices);
     function showInvoice(index){
