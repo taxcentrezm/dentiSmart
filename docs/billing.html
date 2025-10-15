@@ -82,48 +82,149 @@
   <footer class="mt-8 text-sm text-gray-500 text-center">
     SmartDent ERP • Billing Made Easy
   </footer>
+<!-- Invoice Detail Modal -->
+<div id="invoiceDetail" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+  <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg relative">
+    <button onclick="closeInvoice()" class="absolute top-3 right-3 text-gray-500"><i data-feather="x"></i></button>
+    <div id="invoiceContent">
+      <h3 class="text-xl font-bold mb-2">Invoice #<span id="invId">0001</span></h3>
+      <div class="text-sm text-gray-600 mb-4" id="invDate">Date: Oct 01</div>
+      <div class="mb-4">
+        <div class="font-medium" id="invName">Alice Mukuka</div>
+        <div class="text-gray-500" id="invService">Cleaning</div>
+        <div class="text-lg font-semibold mt-2">$<span id="invAmount">120</span></div>
+        <div id="invStatus" class="mt-2 inline-block px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">Paid</div>
+      </div>
+      <div class="mt-4">
+        <div id="qrCode" class="mx-auto"></div>
+      </div>
+      <div class="mt-6 flex justify-end">
+        <button onclick="exportInvoice()" class="px-4 py-2 bg-rose-600 text-white rounded-md">Export PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrious/dist/qrious.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 
   <!-- Scripts -->
   <script>
-    feather.replace();
+  feather.replace();
 
-    const invoices = [
-      {name:'Alice Mukuka', service:'Cleaning', amount:120, date:'Oct 01', status:'Paid'},
-      {name:'Brian Zulu', service:'Root Canal', amount:450, date:'Sep 28', status:'Invoice'},
-      {name:'Nadine Clarke', service:'Crown Fitting', amount:320, date:'Sep 25', status:'Overdue'}
-    ];
+  let invoices = [
+    {name:'Alice Mukuka', service:'Cleaning', amount:120, date:'Oct 01', status:'Paid'},
+    {name:'Brian Zulu', service:'Root Canal', amount:450, date:'Sep 28', status:'Invoice'},
+    {name:'Nadine Clarke', service:'Crown Fitting', amount:320, date:'Sep 25', status:'Overdue'}
+  ];
 
-    function render(list){
-      const ul = document.getElementById('invoiceList');
-      ul.innerHTML = '';
-      list.forEach(inv => {
-        const initials = inv.name.split(' ').map(s=>s[0]).slice(0,2).join('');
-        const li = document.createElement('li');
-        li.className = 'flex items-center justify-between';
-        li.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center font-semibold">${initials}</div>
-            <div>
-              <div class="font-medium">${inv.name}</div>
-              <div class="text-xs text-gray-500">${inv.service} — ${inv.date}</div>
-            </div>
+  function render(list){
+    const ul = document.getElementById('invoiceList');
+    ul.innerHTML = '';
+    list.forEach(inv => {
+      const initials = inv.name.split(' ').map(s=>s[0]).slice(0,2).join('');
+      const li = document.createElement('li');
+      li.className = 'flex items-center justify-between';
+      li.innerHTML = `
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center font-semibold">${initials}</div>
+          <div>
+            <div class="font-medium">${inv.name}</div>
+            <div class="text-xs text-gray-500">${inv.service} — ${inv.date}</div>
           </div>
-          <div class="text-right">
-            <div class="text-sm font-semibold">$${inv.amount}</div>
-            <div class="text-xs ${inv.status==='Paid'?'text-green-600':inv.status==='Overdue'?'text-rose-600':'text-amber-600'}">${inv.status}</div>
-          </div>
-        `;
-        ul.appendChild(li);
-      });
-    }
-
-    render(invoices);
-
-    document.getElementById('searchBtn').addEventListener('click', () => {
-      const q = document.getElementById('searchInput').value.toLowerCase();
-      render(invoices.filter(i => i.name.toLowerCase().includes(q) || i.service.toLowerCase().includes(q)));
+        </div>
+        <div class="text-right">
+          <div class="text-sm font-semibold">$${inv.amount}</div>
+          <div class="text-xs ${inv.status==='Paid'?'text-green-600':inv.status==='Overdue'?'text-rose-600':'text-amber-600'}">${inv.status}</div>
+        </div>
+      `;
+      ul.appendChild(li);
     });
-  </script>
+    updateSummary();
+  }
+
+  function updateSummary(){
+    let total = 0, paid = 0, overdue = 0;
+    invoices.forEach(i => {
+      total += i.amount;
+      if(i.status === 'Paid') paid += i.amount;
+      if(i.status === 'Overdue') overdue += i.amount;
+    });
+    document.querySelector('.card ul').innerHTML = `
+      <li class="flex justify-between"><span>Total Billed</span><span>$${total.toLocaleString()}</span></li>
+      <li class="flex justify-between text-green-600"><span>Paid</span><span>$${paid.toLocaleString()}</span></li>
+      <li class="flex justify-between text-rose-600"><span>Overdue</span><span>$${overdue.toLocaleString()}</span></li>
+    `;
+  }
+
+  function openModal(){
+    document.getElementById('invoiceModal').style.display = 'flex';
+  }
+
+  function closeModal(){
+    document.getElementById('invoiceModal').style.display = 'none';
+  }
+
+  function addInvoice(){
+    const name = document.getElementById('invName').value.trim();
+    const service = document.getElementById('invService').value.trim();
+    const amount = parseFloat(document.getElementById('invAmount').value);
+    const status = document.getElementById('invStatus').value;
+    if(!name || !service || isNaN(amount)) return alert('Please fill all fields');
+    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+    invoices.unshift({ name, service, amount, date: today, status });
+    closeModal();
+    render(invoices);
+  }
+
+  document.getElementById('searchBtn').addEventListener('click', () => {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    render(invoices.filter(i => i.name.toLowerCase().includes(q) || i.service.toLowerCase().includes(q)));
+  });
+
+  document.querySelector('button:contains("New Invoice")')?.addEventListener('click', openModal);
+
+  render(invoices);
+    function showInvoice(index){
+  const inv = invoices[index];
+  document.getElementById('invId').textContent = (index + 1).toString().padStart(4, '0');
+  document.getElementById('invDate').textContent = `Date: ${inv.date}`;
+  document.getElementById('invName').textContent = inv.name;
+  document.getElementById('invService').textContent = inv.service;
+  document.getElementById('invAmount').textContent = inv.amount;
+  const statusEl = document.getElementById('invStatus');
+  statusEl.textContent = inv.status;
+  statusEl.className = `mt-2 inline-block px-3 py-1 rounded-full text-xs font-medium ${
+    inv.status === 'Paid' ? 'bg-green-100 text-green-600' :
+    inv.status === 'Overdue' ? 'bg-rose-100 text-rose-600' :
+    'bg-amber-100 text-amber-600'
+  }`;
+  document.getElementById('invoiceDetail').style.display = 'flex';
+
+  // QR code generation
+  const qr = new QRious({
+    element: document.getElementById('qrCode'),
+    value: `https://smartdent.com/invoice/${index + 1}`,
+    size: 120
+  });
+}
+
+function closeInvoice(){
+  document.getElementById('invoiceDetail').style.display = 'none';
+}
+
+function exportInvoice(){
+  html2canvas(document.getElementById('invoiceContent')).then(canvas => {
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF();
+    pdf.addImage(imgData, 'PNG', 10, 10, 190, 0);
+    pdf.save('SmartDent-Invoice.pdf');
+  });
+}
+
+</script>
   <script src="core.js"></script>
 </body>
 </html>
