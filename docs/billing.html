@@ -190,26 +190,33 @@
     document.getElementById('invoiceModal').style.display = 'none';
   }
 
-  function addInvoice(){
-    const name = document.getElementById('invName').value.trim();
-    const service = document.getElementById('invService').value.trim();
-    const amount = parseFloat(document.getElementById('invAmount').value);
-    const status = document.getElementById('invStatus').value;
-    if(!name || !service || isNaN(amount)) return alert('Please fill all fields');
-    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
-    invoices.unshift({ name, service, amount, date: today, status });
-    closeModal();
-    render(invoices);
+function addInvoice() {
+  const nameEl = document.getElementById('invName');
+  const serviceEl = document.getElementById('invService');
+  const amountEl = document.getElementById('invAmount');
+  const statusEl = document.getElementById('invStatus');
+
+  if (!nameEl || !serviceEl || !amountEl || !statusEl) {
+    alert('Invoice form is incomplete or missing.');
+    return;
   }
 
-  document.getElementById('searchBtn').addEventListener('click', () => {
-    const q = document.getElementById('searchInput').value.toLowerCase();
-    render(invoices.filter(i => i.name.toLowerCase().includes(q) || i.service.toLowerCase().includes(q)));
-  });
+  const name = nameEl.value.trim();
+  const service = serviceEl.value.trim();
+  const amount = parseFloat(amountEl.value);
+  const status = statusEl.value;
 
-document.getElementById('newInvoiceBtn')?.addEventListener('click', openModal);
+  if (!name || !service || isNaN(amount)) {
+    alert('Please fill all fields correctly.');
+    return;
+  }
 
+  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+  invoices.unshift({ name, service, amount, date: today, status });
+  closeModal();
   render(invoices);
+}
+
     function showInvoice(index){
   const inv = invoices[index];
   document.getElementById('invId').textContent = (index + 1).toString().padStart(4, '0');
