@@ -1,6 +1,11 @@
 // Feather icons
 feather.replace();
 
+(function initConverter(){
+  const rateIndicator = document.getElementById('rateIndicator');
+  if (!rateIndicator) return; // Exit if not on this page
+
+
 /* ----------------------
    Slideshow (Dashboard)
 ---------------------- */
@@ -362,4 +367,6 @@ feather.replace();
   };
 
   render();
+})();
+
 })();
