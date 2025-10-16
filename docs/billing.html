@@ -137,11 +137,8 @@
   feather.replace();
 
   let invoices = [];
-let selectedInvoiceIndex = null;
+  let selectedInvoiceIndex = null;
 
-function showInvoice(index) {
-  selectedInvoiceIndex = index;
-  
   // Load invoices from localStorage
   function loadInvoices() {
     const stored = localStorage.getItem('smartdent_invoices');
@@ -207,52 +204,47 @@ function showInvoice(index) {
     }
   }
 
-  
   // Modal controls
   function openModal() {
-    const modal = document.getElementById('invoiceModal');
-    if (modal) modal.style.display = 'flex';
+    document.getElementById('invoiceModal').style.display = 'flex';
   }
 
   function closeModal() {
-    const modal = document.getElementById('invoiceModal');
-    if (modal) modal.style.display = 'none';
+    document.getElementById('invoiceModal').style.display = 'none';
   }
 
   function closeInvoice() {
-    const modal = document.getElementById('invoiceDetail');
-    if (modal) modal.style.display = 'none';
+    document.getElementById('invoiceDetail').style.display = 'none';
   }
 
   // Add new invoice
-function addInvoice() {
-  const nameEl = document.getElementById('newInvName');
-  const serviceEl = document.getElementById('newInvService');
-  const amountEl = document.getElementById('newInvAmount');
-  const statusEl = document.getElementById('newInvStatus');
+  function addInvoice() {
+    const nameEl = document.getElementById('newInvName');
+    const serviceEl = document.getElementById('newInvService');
+    const amountEl = document.getElementById('newInvAmount');
+    const statusEl = document.getElementById('newInvStatus');
 
-  const name = nameEl?.value?.trim();
-  const service = serviceEl?.value?.trim();
-  const amount = parseFloat(amountEl?.value);
-  const status = statusEl?.value;
+    const name = nameEl?.value?.trim();
+    const service = serviceEl?.value?.trim();
+    const amount = parseFloat(amountEl?.value);
+    const status = statusEl?.value;
 
-  if (!name || !service || isNaN(amount)) {
-    alert('Please fill all fields correctly.');
-    return;
+    if (!name || !service || isNaN(amount)) {
+      alert('Please fill all fields correctly.');
+      return;
+    }
+
+    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+    const id = 'INV-' + (invoices.length + 1).toString().padStart(4, '0');
+    invoices.unshift({ id, name, service, amount, date: today, status });
+    saveInvoices();
+    closeModal();
+    render(invoices);
   }
-
-  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
-  const id = 'INV-' + (invoices.length + 1).toString().padStart(4, '0');
-  invoices.unshift({ id, name, service, amount, date: today, status });
-  saveInvoices();
-  closeModal();
-  render(invoices);
-}
-
-
 
   // Show invoice detail
   function showInvoice(index) {
+    selectedInvoiceIndex = index;
     const inv = invoices[index];
     document.getElementById('invId').textContent = inv.id;
     document.getElementById('invDate').textContent = `Date: ${inv.date}`;
@@ -276,87 +268,66 @@ function addInvoice() {
       size: 120
     });
   }
- 
 
-  // Mark invoice as paid
-  function markInvoiceAsPaid(index) {
-    invoices[index].status = 'Paid';
+  // Mark selected invoice as paid
+  function markSelectedInvoiceAsPaid() {
+    if (selectedInvoiceIndex === null) {
+      alert('Please select an invoice first.');
+      return;
+    }
+    invoices[selectedInvoiceIndex].status = 'Paid';
     saveInvoices();
+    closeInvoice();
     render();
   }
 
-  // Search functionality
-  document.getElementById('searchBtn')?.addEventListener('click', () => {
-    const q = document.getElementById('searchInput')?.value.toLowerCase();
-    render(invoices.filter(i =>
-      i.name.toLowerCase().includes(q) || i.service.toLowerCase().includes(q)
-    ));
-  });
- 
-  
-function exportInvoice() {
-  
-  
-if (selectedInvoiceIndex === null) {
-    alert('Please select an invoice to export.');
-    return;
-  }
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
-  // Sample logo (replace with your own base64 or image URL)
-  const logoUrl = 'logo.jpeg'; 
+  // Export selected invoice to PDF
+  function exportInvoice() {
+    if (selectedInvoiceIndex === null) {
+      alert('Please select an invoice to export.');
+      return;
+    }
 
-  // Extract invoice data
-  const invId = document.getElementById('invId').textContent;
-  const invDate = document.getElementById('invDate').textContent;
-  const invName = document.getElementById('invName').textContent;
-  const invService = document.getElementById('invService').textContent;
-  const invAmount = document.getElementById('invAmount').textContent;
-  const invStatus = document.getElementById('invStatus').textContent;
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    const logoUrl = 'logo.jpeg';
 
-  // Load logo image
-  const img = new Image();
-  img.crossOrigin = 'Anonymous';
-  img.src = logoUrl;
-  img.onload = () => {
-    pdf.addImage(img, 'PNG', 15, 10, 30, 15);
+    const inv = invoices[selectedInvoiceIndex];
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.src = logoUrl;
+    img.onload = () => {
+      pdf.addImage(img, 'PNG', 15, 10, 30, 15);
+      pdf.setFontSize(16);
+      pdf.setTextColor(33, 33, 33);
+      pdf.text('SmartDent ERP — Invoice', 55, 20);
 
-    // Header
-    pdf.setFontSize(16);
-    pdf.setTextColor(33, 33, 33);
-    pdf.text('SmartDent ERP — Invoice', 55, 20);
+      pdf.setFontSize(12);
+      pdf.text(`Invoice #: ${inv.id}`, 15, 35);
+      pdf.text(`Date: ${inv.date}`, 15, 42);
 
-    // Invoice Info
-    pdf.setFontSize(12);
-    pdf.text(`Invoice #: ${invId}`, 15, 35);
-    pdf.text(invDate, 15, 42);
+      pdf.setFontSize(14);
+      pdf.text('Patient:', 15, 55);
+      pdf.setFontSize(12);
+      pdf.text(inv.name, 35, 55);
 
-    // Patient Info
-    pdf.setFontSize(14);
-    pdf.text('Patient:', 15, 55);
-    pdf.setFontSize(12);
-    pdf.text(invName, 35, 55);
+      pdf.setFillColor(245, 245, 245);
+      pdf.rect(15, 70, 180, 10, 'F');
+      pdf.setTextColor(0);
+      pdf.text('Description', 20, 77);
+      pdf.text('Qty', 100, 77);
+      pdf.text('Unit Price', 130, 77);
+      pdf.text('Total', 170, 77);
 
-    // Table Header
-    pdf.setFillColor(245, 245, 245);
-    pdf.rect(15, 70, 180, 10, 'F');
-    pdf.setTextColor(0);
-    pdf.text('Description', 20, 77);
-    pdf.text('Qty', 100, 77);
-    pdf.text('Unit Price', 130, 77);
-    pdf.text('Total', 170, 77);
+      const y = 87;
+      pdf.text(inv.service, 20, y);
+      pdf.text('1', 100, y);
+      pdf.text(`$${inv.amount}`, 130, y);
+      pdf.text(`$${inv.amount}`, 170, y);
 
-    // Table Row (for now, single item — can be looped for multiple)
-    const y = 87;
-    pdf.text(invService, 20, y);
-    pdf.text('1', 100, y);
-    pdf.text(`$${invAmount}`, 130, y);
-    pdf.text(`$${invAmount}`, 170, y);
-
-    // Summary
-    pdf.setFontSize(12);
-    pdf.text('Subtotal:', 130, y + 20);
-    pdf.text(`$${invAmount}`, 170, y + 20);
+      pdf.setFontSize(12);
+      pdf.text('Subtotal:', 130, y + 20);
+      pdf.text(`$${inv.amount}`, 170, y + 20);
 
     pdf.text('Status:', 130, y + 28);
     pdf.setTextColor(
@@ -366,47 +337,45 @@ if (selectedInvoiceIndex === null) {
     );
     pdf.text(invStatus, 170, y + 28);
 
-    // QR Code
-    const qrCanvas = document.createElement('canvas');
-    const qr = new QRious({
-      element: qrCanvas,
-      value: `https://smartdent.com/invoice/${invId}`,
-      size: 100
-    });
-    const qrData = qrCanvas.toDataURL('image/png');
-    pdf.addImage(qrData, 'PNG', 150, 200, 40, 40);
+      // QR Code
+      const qrCanvas = document.createElement('canvas');
+      const qr = new QRious({
+        element: qrCanvas,
+        value: `https://smartdent.com/invoice/${inv.id}`,
+        size: 100
+      });
+      const qrData = qrCanvas.toDataURL('image/png');
+      pdf.addImage(qrData, 'PNG', 150, 200, 40, 40);
 
-    // Footer
-    pdf.setDrawColor(230, 57, 70);
-    pdf.line(15, 270, 195, 270);
-    pdf.setFontSize(10);
-    pdf.setTextColor(100);
-    pdf.text('SmartDent Clinic • +260 97 000 0000 • info@smartdent.com', 15, 275);
-    pdf.text('Authorized Signature: ___________________________', 15, 265);
+      // Footer
+      pdf.setDrawColor(230, 57, 70);
+      pdf.line(15, 270, 195, 270);
+      pdf.setFontSize(10);
+      pdf.setTextColor(100);
+      pdf.text('SmartDent Clinic • +260 97 000 0000 • info@smartdent.com', 15, 275);
+      pdf.text('Authorized Signature: ___________________________', 15, 265);
 
-    // Save
-    pdf.save(`SmartDent-Invoice-${invId}.pdf`);
-  };
-}
-
-function markSelectedInvoiceAsPaid() {
-  if (selectedInvoiceIndex === null) {
-    alert('Please select an invoice first.');
-    return;
+      // Save PDF
+      pdf.save(`SmartDent-Invoice-${inv.id}.pdf`);
+    };
   }
-  invoices[selectedInvoiceIndex].status = 'Paid';
-  
+
+  // Search functionality
+  document.getElementById('searchBtn')?.addEventListener('click', () => {
+    const q = document.getElementById('searchInput')?.value.toLowerCase();
+    render(invoices.filter(i =>
+      i.name.toLowerCase().includes(q) || i.service.toLowerCase().includes(q)
+    ));
+  });
 
   // Connect modal button
   document.getElementById('newInvoiceBtn')?.addEventListener('click', openModal);
 
-  // Load and render
-  saveInvoices();
-   closeInvoice();
+  // Initialize
   loadInvoices();
   render();
-}
 </script>
+
 
   <script src="core.js"></script>
 </body>
