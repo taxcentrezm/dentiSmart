@@ -219,34 +219,37 @@
   }
 
   // Add new invoice
-  function addInvoice() {
-    const nameEl = document.getElementById('invName');
-    const serviceEl = document.getElementById('invService');
-    const amountEl = document.getElementById('invAmount');
-    const statusEl = document.getElementById('invStatus');
+function addInvoice() {
+  const nameEl = document.getElementById('invName');
+  const serviceEl = document.getElementById('invService');
+  const amountEl = document.getElementById('invAmount');
+  const statusEl = document.getElementById('invStatus');
 
-    if (!nameEl || !serviceEl || !amountEl || !statusEl) {
-      alert('Invoice form is incomplete or missing.');
-      return;
-    }
-
-    const name = nameEl.value.trim();
-    const service = serviceEl.value.trim();
-    const amount = parseFloat(amountEl.value);
-    const status = statusEl.value;
-
-    if (!name || !service || isNaN(amount)) {
-      alert('Please fill all fields correctly.');
-      return;
-    }
-
-    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
-    const id = 'INV-' + (invoices.length + 1).toString().padStart(4, '0');
-    invoices.unshift({ id, name, service, amount, date: today, status });
-    saveInvoices();
-    closeModal();
-    render(invoices);
+  if (!nameEl || !serviceEl || !amountEl || !statusEl) {
+    alert('Invoice form is missing or not loaded.');
+    return;
   }
+
+  const name = nameEl.value?.trim();
+  const service = serviceEl.value?.trim();
+  const amount = parseFloat(amountEl.value);
+  const status = statusEl.value;
+
+  if (!name || !service || isNaN(amount)) {
+    alert('Please fill all fields correctly.');
+    return;
+  }
+
+  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+  const id = 'INV-' + (invoices.length + 1).toString().padStart(4, '0');
+  invoices.unshift({ id, name, service, amount, date: today, status });
+  saveInvoices();
+  closeModal();
+  render(invoices);
+}
+  
+document.getElementById('invoiceModal').style.display = 'flex';
+
 
   // Show invoice detail
   function showInvoice(index) {
