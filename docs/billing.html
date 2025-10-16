@@ -283,51 +283,71 @@
 
   // Export selected invoice to PDF
   function exportInvoice() {
-    if (selectedInvoiceIndex === null) {
-      alert('Please select an invoice to export.');
-      return;
-    }
+  if (selectedInvoiceIndex === null) {
+    alert('Please select an invoice to export.');
+    return;
+  }
 
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
-    const logoUrl = 'logo.jpeg';
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
 
-    const inv = invoices[selectedInvoiceIndex];
-    const img = new Image();
-    img.crossOrigin = 'Anonymous';
-    img.src = logoUrl;
-    img.onload = () => {
-      pdf.addImage(img, 'PNG', 15, 10, 30, 15);
-      pdf.setFontSize(16);
-      pdf.setTextColor(33, 33, 33);
-      pdf.text('SmartDent ERP — Invoice', 55, 20);
+  // Replace with your actual logo path or base64 string
+  const logoUrl = 'logo.jpeg';
 
-      pdf.setFontSize(12);
-      pdf.text(`Invoice #: ${inv.id}`, 15, 35);
-      pdf.text(`Date: ${inv.date}`, 15, 42);
+  const inv = invoices[selectedInvoiceIndex];
 
-      pdf.setFontSize(14);
-      pdf.text('Patient:', 15, 55);
-      pdf.setFontSize(12);
-      pdf.text(inv.name, 35, 55);
+  // Safely extract text content
+  const invId = inv.id || '';
+  const invDate = inv.date || '';
+  const invName = inv.name || '';
+  const invService = inv.service || '';
+  const invAmount = inv.amount?.toString() || '0';
+  const invStatus = inv.status || '';
 
-      pdf.setFillColor(245, 245, 245);
-      pdf.rect(15, 70, 180, 10, 'F');
-      pdf.setTextColor(0);
-      pdf.text('Description', 20, 77);
-      pdf.text('Qty', 100, 77);
-      pdf.text('Unit Price', 130, 77);
-      pdf.text('Total', 170, 77);
+  const img = new Image();
+  img.crossOrigin = 'Anonymous';
+  img.src = logoUrl;
 
-      const y = 87;
-      pdf.text(inv.service, 20, y);
-      pdf.text('1', 100, y);
-      pdf.text(`$${inv.amount}`, 130, y);
-      pdf.text(`$${inv.amount}`, 170, y);
+  img.onload = () => {
+    // Logo
+    pdf.addImage(img, 'PNG', 15, 10, 30, 15);
 
-      pdf.setFontSize(12);
-      pdf.text('Subtotal:', 130, y + 20);
-      pdf.text(`$${inv.amount}`, 170, y + 20);
+    // Header
+    pdf.setFontSize(16);
+    pdf.setTextColor(33, 33, 33);
+    pdf.text('SmartDent ERP — Invoice', 55, 20);
+
+    // Invoice Info
+    pdf.setFontSize(12);
+    pdf.text(`Invoice #: ${invId}`, 15, 35);
+    pdf.text(`Date: ${invDate}`, 15, 42);
+
+    // Patient Info
+    pdf.setFontSize(14);
+    pdf.text('Patient:', 15, 55);
+    pdf.setFontSize(12);
+    pdf.text(invName || 'Unknown', 35, 55);
+
+    // Table Header
+    pdf.setFillColor(245, 245, 245);
+    pdf.rect(15, 70, 180, 10, 'F');
+    pdf.setTextColor(0);
+    pdf.text('Description', 20, 77);
+    pdf.text('Qty', 100, 77);
+    pdf.text('Unit Price', 130, 77);
+    pdf.text('Total', 170, 77);
+
+    // Table Row
+    const y = 87;
+    pdf.text(invService || 'Service', 20, y);
+    pdf.text('1', 100, y);
+    pdf.text(`$${invAmount}`, 130, y);
+    pdf.text(`$${invAmount}`, 170, y);
+
+    // Summary
+    pdf.setFontSize(12);
+    pdf.text('Subtotal:', 130, y + 20);
+    pdf.text(`$${invAmount}`, 170, y + 20);
 
     pdf.text('Status:', 130, y + 28);
     pdf.setTextColor(
@@ -337,28 +357,33 @@
     );
     pdf.text(invStatus, 170, y + 28);
 
-      // QR Code
-      const qrCanvas = document.createElement('canvas');
-      const qr = new QRious({
-        element: qrCanvas,
-        value: `https://smartdent.com/invoice/${inv.id}`,
-        size: 100
-      });
-      const qrData = qrCanvas.toDataURL('image/png');
-      pdf.addImage(qrData, 'PNG', 150, 200, 40, 40);
+    // QR Code
+    const qrCanvas = document.createElement('canvas');
+    const qr = new QRious({
+      element: qrCanvas,
+      value: `https://smartdent.com/invoice/${invId}`,
+      size: 100
+    });
+    const qrData = qrCanvas.toDataURL('image/png');
+    pdf.addImage(qrData, 'PNG', 150, 200, 40, 40);
 
-      // Footer
-      pdf.setDrawColor(230, 57, 70);
-      pdf.line(15, 270, 195, 270);
-      pdf.setFontSize(10);
-      pdf.setTextColor(100);
-      pdf.text('SmartDent Clinic • +260 97 000 0000 • info@smartdent.com', 15, 275);
-      pdf.text('Authorized Signature: ___________________________', 15, 265);
+    // Footer
+    pdf.setDrawColor(230, 57, 70);
+    pdf.line(15, 270, 195, 270);
+    pdf.setFontSize(10);
+    pdf.setTextColor(100);
+    pdf.text('SmartDent Clinic • +260 97 000 0000 • info@smartdent.com', 15, 275);
+    pdf.text('Authorized Signature: ___________________________', 15, 265);
 
-      // Save PDF
-      pdf.save(`SmartDent-Invoice-${inv.id}.pdf`);
-    };
-  }
+    // Save
+    pdf.save(`SmartDent-Invoice-${invId}.pdf`);
+  };
+
+  img.onerror = () => {
+    alert('Failed to load logo image. Please check the path or file.');
+  };
+}
+
 
   // Search functionality
   document.getElementById('searchBtn')?.addEventListener('click', () => {
