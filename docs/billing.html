@@ -271,16 +271,7 @@ function addInvoice() {
       size: 120
     });
   }
-
-  // Export invoice to PDF
-  function exportInvoice() {
-    html2canvas(document.getElementById('invoiceContent')).then(canvas => {
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF();
-      pdf.addImage(imgData, 'PNG', 10, 10, 190, 0);
-      pdf.save('SmartDent-Invoice.pdf');
-    });
-  }
+ 
 
   // Mark invoice as paid
   function markInvoiceAsPaid(index) {
@@ -296,6 +287,61 @@ function addInvoice() {
       i.name.toLowerCase().includes(q) || i.service.toLowerCase().includes(q)
     ));
   });
+  function exportInvoice() {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+
+  const invId = document.getElementById('invId').textContent;
+  const invDate = document.getElementById('invDate').textContent;
+  const invName = document.getElementById('invName').textContent;
+  const invService = document.getElementById('invService').textContent;
+  const invAmount = document.getElementById('invAmount').textContent;
+  const invStatus = document.getElementById('invStatus').textContent;
+
+  // Header
+  pdf.setFillColor(230, 57, 70); // rose red
+  pdf.rect(0, 0, 210, 20, 'F');
+  pdf.setFontSize(16);
+  pdf.setTextColor(255, 255, 255);
+  pdf.text('SmartDent ERP — Invoice', 15, 13);
+
+  // Invoice Info
+  pdf.setFontSize(12);
+  pdf.setTextColor(33, 33, 33);
+  pdf.text(`Invoice #: ${invId}`, 15, 30);
+  pdf.text(invDate, 15, 37);
+
+  // Patient Info
+  pdf.setFontSize(14);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('Patient:', 15, 50);
+  pdf.setFontSize(12);
+  pdf.text(invName, 35, 50);
+
+  pdf.text('Service:', 15, 58);
+  pdf.text(invService, 35, 58);
+
+  pdf.text('Amount:', 15, 66);
+  pdf.text(`$${invAmount}`, 35, 66);
+
+  pdf.text('Status:', 15, 74);
+  pdf.setTextColor(
+    invStatus === 'Paid' ? 0 : invStatus === 'Overdue' ? 200 : 255,
+    invStatus === 'Paid' ? 150 : invStatus === 'Overdue' ? 0 : 165,
+    invStatus === 'Paid' ? 0 : invStatus === 'Overdue' ? 0 : 0
+  );
+  pdf.text(invStatus, 35, 74);
+
+  // Footer
+  pdf.setDrawColor(230, 57, 70);
+  pdf.line(15, 270, 195, 270);
+  pdf.setFontSize(10);
+  pdf.setTextColor(100);
+  pdf.text('SmartDent ERP • Billing Made Easy', 15, 275);
+
+  pdf.save(`SmartDent-Invoice-${invId}.pdf`);
+}
+
 
   // Connect modal button
   document.getElementById('newInvoiceBtn')?.addEventListener('click', openModal);
