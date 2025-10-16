@@ -225,15 +225,12 @@ function addInvoice() {
   const amountEl = document.getElementById('invAmount');
   const statusEl = document.getElementById('invStatus');
 
-  if (!nameEl || !serviceEl || !amountEl || !statusEl) {
-    alert('Invoice form is missing or not loaded.');
-    return;
-  }
+  const name = nameEl?.value?.trim();
+  const service = serviceEl?.value?.trim();
+  const amount = parseFloat(amountEl?.value);
+  const status = statusEl?.value;
 
-  const name = nameEl.value?.trim();
-  const service = serviceEl.value?.trim();
-  const amount = parseFloat(amountEl.value);
-  const status = statusEl.value;
+  console.log({ name, service, amount, status });
 
   if (!name || !service || isNaN(amount)) {
     alert('Please fill all fields correctly.');
