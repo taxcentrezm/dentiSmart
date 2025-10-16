@@ -103,16 +103,17 @@
     </div>
   </div>
 </div>
+ 
 
   <!-- New Invoice Modal -->
 <div id="invoiceModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
   <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
     <h3 class="text-lg font-semibold mb-4">Create Invoice</h3>
     <div class="space-y-3">
-      <input id="invName" type="text" placeholder="Patient Name" class="w-full px-3 py-2 border rounded-md" />
-      <input id="invService" type="text" placeholder="Service" class="w-full px-3 py-2 border rounded-md" />
-      <input id="invAmount" type="number" placeholder="Amount" class="w-full px-3 py-2 border rounded-md" />
-      <select id="invStatus" class="w-full px-3 py-2 border rounded-md">
+      <input id="newInvName" type="text" placeholder="Patient Name" class="w-full px-3 py-2 border rounded-md" />
+      <input id="newInvService" type="text" placeholder="Service" class="w-full px-3 py-2 border rounded-md" />
+      <input id="newInvAmount" type="number" placeholder="Amount" class="w-full px-3 py-2 border rounded-md" />
+      <select id="newInvStatus" class="w-full px-3 py-2 border rounded-md">
         <option value="Invoice">Invoice</option>
         <option value="Paid">Paid</option>
         <option value="Overdue">Overdue</option>
@@ -220,17 +221,15 @@
 
   // Add new invoice
 function addInvoice() {
-  const nameEl = document.getElementById('invName');
-  const serviceEl = document.getElementById('invService');
-  const amountEl = document.getElementById('invAmount');
-  const statusEl = document.getElementById('invStatus');
+  const nameEl = document.getElementById('newInvName');
+  const serviceEl = document.getElementById('newInvService');
+  const amountEl = document.getElementById('newInvAmount');
+  const statusEl = document.getElementById('newInvStatus');
 
   const name = nameEl?.value?.trim();
   const service = serviceEl?.value?.trim();
   const amount = parseFloat(amountEl?.value);
   const status = statusEl?.value;
-
-  console.log({ name, service, amount, status });
 
   if (!name || !service || isNaN(amount)) {
     alert('Please fill all fields correctly.');
@@ -244,8 +243,7 @@ function addInvoice() {
   closeModal();
   render(invoices);
 }
-  
-document.getElementById('invoiceModal').style.display = 'flex';
+
 
 
   // Show invoice detail
