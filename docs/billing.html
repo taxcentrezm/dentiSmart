@@ -69,9 +69,9 @@
         <div class="card">
           <h3 class="font-semibold mb-3">Quick Actions</h3>
           <div class="grid gap-3">
-            <button class="flex items-center gap-3 px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100"><i data-feather="file-text"></i> Generate Invoice</button>
-            <button class="flex items-center gap-3 px-4 py-2 rounded-lg bg-green-50 hover:bg-green-100"><i data-feather="check-circle"></i> Mark as Paid</button>
-            <button class="flex items-center gap-3 px-4 py-2 rounded-lg bg-yellow-50 hover:bg-yellow-100"><i data-feather="download"></i> Export</button>
+            <button onclick="openModal()" class="flex items-center gap-3 px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100"><i data-feather="file-text"></i> Generate Invoice</button>
+            <button onclick="markSelectedInvoiceAsPaid()" class="flex items-center gap-3 px-4 py-2 rounded-lg bg-green-50 hover:bg-green-100"><i data-feather="check-circle"></i> Mark as Paid</button>
+           <button onclick="exportInvoice()" class="flex items-center gap-3 px-4 py-2 rounded-lg bg-yellow-50 hover:bg-yellow-100"><i data-feather="download"></i> Export</button>
           </div>
         </div>
       </aside>
@@ -137,7 +137,11 @@
   feather.replace();
 
   let invoices = [];
+let selectedInvoiceIndex = null;
 
+function showInvoice(index) {
+  selectedInvoiceIndex = index;
+  
   // Load invoices from localStorage
   function loadInvoices() {
     const stored = localStorage.getItem('smartdent_invoices');
@@ -203,6 +207,7 @@
     }
   }
 
+  
   // Modal controls
   function openModal() {
     const modal = document.getElementById('invoiceModal');
@@ -287,11 +292,17 @@ function addInvoice() {
       i.name.toLowerCase().includes(q) || i.service.toLowerCase().includes(q)
     ));
   });
+ 
   
 function exportInvoice() {
+  
+  
+if (selectedInvoiceIndex === null) {
+    alert('Please select an invoice to export.');
+    return;
+  }
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
-
   // Sample logo (replace with your own base64 or image URL)
   const logoUrl = 'logo.jpeg'; 
 
@@ -378,14 +389,23 @@ function exportInvoice() {
   };
 }
 
-
+function markSelectedInvoiceAsPaid() {
+  if (selectedInvoiceIndex === null) {
+    alert('Please select an invoice first.');
+    return;
+  }
+  invoices[selectedInvoiceIndex].status = 'Paid';
+  
 
   // Connect modal button
   document.getElementById('newInvoiceBtn')?.addEventListener('click', openModal);
 
   // Load and render
+  saveInvoices();
+   closeInvoice();
   loadInvoices();
   render();
+}
 </script>
 
   <script src="core.js"></script>
