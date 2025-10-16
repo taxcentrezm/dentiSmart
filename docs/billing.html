@@ -292,6 +292,9 @@ function exportInvoice() {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
 
+  // Sample logo (replace with your own base64 or image URL)
+  const logoUrl = 'logo.jpg'; 
+
   // Extract invoice data
   const invId = document.getElementById('invId').textContent;
   const invDate = document.getElementById('invDate').textContent;
@@ -300,62 +303,79 @@ function exportInvoice() {
   const invAmount = document.getElementById('invAmount').textContent;
   const invStatus = document.getElementById('invStatus').textContent;
 
-  // Header
-  pdf.setFillColor(230, 57, 70); // rose red
-  pdf.rect(0, 0, 210, 20, 'F');
-  pdf.setFontSize(16);
-  pdf.setTextColor(255, 255, 255);
-  pdf.text('SmartDent ERP — Invoice', 15, 13);
+  // Load logo image
+  const img = new Image();
+  img.crossOrigin = 'Anonymous';
+  img.src = logoUrl;
+  img.onload = () => {
+    pdf.addImage(img, 'PNG', 15, 10, 30, 15);
 
-  // Invoice Info
-  pdf.setFontSize(12);
-  pdf.setTextColor(33, 33, 33);
-  pdf.text(`Invoice #: ${invId}`, 15, 30);
-  pdf.text(invDate, 15, 37);
+    // Header
+    pdf.setFontSize(16);
+    pdf.setTextColor(33, 33, 33);
+    pdf.text('SmartDent ERP — Invoice', 55, 20);
 
-  // Patient Info
-  pdf.setFontSize(14);
-  pdf.text('Patient:', 15, 50);
-  pdf.setFontSize(12);
-  pdf.text(invName, 35, 50);
+    // Invoice Info
+    pdf.setFontSize(12);
+    pdf.text(`Invoice #: ${invId}`, 15, 35);
+    pdf.text(invDate, 15, 42);
 
-  // Table Header
-  pdf.setFontSize(12);
-  pdf.setFillColor(245, 245, 245);
-  pdf.rect(15, 65, 180, 10, 'F');
-  pdf.setTextColor(0);
-  pdf.text('Description', 20, 72);
-  pdf.text('Qty', 100, 72);
-  pdf.text('Unit Price', 130, 72);
-  pdf.text('Total', 170, 72);
+    // Patient Info
+    pdf.setFontSize(14);
+    pdf.text('Patient:', 15, 55);
+    pdf.setFontSize(12);
+    pdf.text(invName, 35, 55);
 
-  // Table Row
-  pdf.text(invService, 20, 82);
-  pdf.text('1', 100, 82);
-  pdf.text(`$${invAmount}`, 130, 82);
-  pdf.text(`$${invAmount}`, 170, 82);
+    // Table Header
+    pdf.setFillColor(245, 245, 245);
+    pdf.rect(15, 70, 180, 10, 'F');
+    pdf.setTextColor(0);
+    pdf.text('Description', 20, 77);
+    pdf.text('Qty', 100, 77);
+    pdf.text('Unit Price', 130, 77);
+    pdf.text('Total', 170, 77);
 
-  // Summary
-  pdf.setFontSize(12);
-  pdf.text('Subtotal:', 130, 100);
-  pdf.text(`$${invAmount}`, 170, 100);
+    // Table Row (for now, single item — can be looped for multiple)
+    const y = 87;
+    pdf.text(invService, 20, y);
+    pdf.text('1', 100, y);
+    pdf.text(`$${invAmount}`, 130, y);
+    pdf.text(`$${invAmount}`, 170, y);
 
-  pdf.text('Status:', 130, 108);
-  pdf.setTextColor(
-    invStatus === 'Paid' ? 0 : invStatus === 'Overdue' ? 200 : 255,
-    invStatus === 'Paid' ? 150 : invStatus === 'Overdue' ? 0 : 165,
-    invStatus === 'Paid' ? 0 : invStatus === 'Overdue' ? 0 : 0
-  );
-  pdf.text(invStatus, 170, 108);
+    // Summary
+    pdf.setFontSize(12);
+    pdf.text('Subtotal:', 130, y + 20);
+    pdf.text(`$${invAmount}`, 170, y + 20);
 
-  // Footer
-  pdf.setDrawColor(230, 57, 70);
-  pdf.line(15, 270, 195, 270);
-  pdf.setFontSize(10);
-  pdf.setTextColor(100);
-  pdf.text('SmartDent ERP • Billing Made Easy', 15, 275);
+    pdf.text('Status:', 130, y + 28);
+    pdf.setTextColor(
+      invStatus === 'Paid' ? 0 : invStatus === 'Overdue' ? 200 : 255,
+      invStatus === 'Paid' ? 150 : invStatus === 'Overdue' ? 0 : 165,
+      invStatus === 'Paid' ? 0 : invStatus === 'Overdue' ? 0 : 0
+    );
+    pdf.text(invStatus, 170, y + 28);
 
-  pdf.save(`SmartDent-Invoice-${invId}.pdf`);
+    // QR Code
+    const qrCanvas = document.createElement('canvas');
+    const qr = new QRious({
+      element: qrCanvas,
+      value: `https://smartdent.com/invoice/${invId}`,
+      size: 100
+    });
+    const qrData = qrCanvas.toDataURL('image/png');
+    pdf.addImage(qrData, 'PNG', 150, 200, 40, 40);
+
+    // Footer
+    pdf.setDrawColor(230, 57, 70);
+    pdf.line(15, 270, 195, 270);
+    pdf.setFontSize(10);
+    pdf.setTextColor(100);
+    pdf.text('SmartDent Clinic • +260 97 000 0000 • info@smartdent.com', 15, 275);
+    pdf.text('Authorized Signature: ___________________________', 15, 265);
+
+    // Save
+    pdf.save(`SmartDent-Invoice-${invId}.pdf`);
+  };
 }
 
 
