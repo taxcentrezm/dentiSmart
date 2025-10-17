@@ -481,7 +481,6 @@ async function generatePayslip(index) {
   pdf.setFont(window.customFontLoaded ? "Poppins" : "helvetica", "normal");
 
   // ====== CONFIGURATION ======
-  const emp = staff[index];
   const month = new Date().toLocaleString("en-US", { month: "long" });
   const year = new Date().getFullYear();
   const payrollPeriod = `${month} 01 – ${month} 31, ${year}`;
