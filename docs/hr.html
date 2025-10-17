@@ -72,6 +72,8 @@
     <div class="card">
       <h3 class="font-semibold mb-3">Leave Tracker</h3>
       <ul id="leaveTracker" class="space-y-2 text-sm"></ul>
+      <br/>
+      <br/>
   <canvas id="leaveChart" height="200" ></canvas>
 </div>
   </div>
@@ -474,11 +476,23 @@ async function generatePayslip(index) {
     pdf.text(`Payroll Period: ${payrollPeriod}`, 15, 30);
     pdf.text(`Employee ID: ${employeeId}`, 150, 30);
 
-    // ====== EMPLOYEE DETAILS ======
-    pdf.text(`Name: ${emp.name}`, 15, 40);
-    pdf.text(`Role: ${emp.role}`, 15, 47);
-    pdf.text(`Department: ${emp.department}`, 15, 54);
-    pdf.text(`Date Issued: ${new Date().toLocaleDateString()}`, 15, 61);
+    // ====== EMPLOYEE DETAILS (ONE ROW) ======
+pdf.setFontSize(11);
+pdf.setTextColor(0);
+
+// Labels
+pdf.text("Name:", 15, 42);
+pdf.text("Role:", 80, 42);
+pdf.text("Department:", 125, 42);
+pdf.text("Date Issued:", 170, 42);
+
+// Values
+pdf.setFont("Poppins", "normal");
+pdf.text(emp.name, 30, 42);
+pdf.text(emp.role, 95, 42);
+pdf.text(emp.department, 155, 42);
+pdf.text(new Date().toLocaleDateString(), 195, 42, { align: "right" });
+
 
     // ====== TABLE HEADERS ======
     pdf.setFontSize(12);
