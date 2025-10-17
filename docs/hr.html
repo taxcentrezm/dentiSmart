@@ -387,6 +387,7 @@ function renderLeaveChart() {
     if (!jsPDF) return alert("jsPDF is not loaded. Please check your script tag.");
 
     const pdf = new jsPDF();
+    
     pdf.setFontSize(16);
     pdf.text("SmartDent ERP — Payroll Summary", 15, 20);
 
@@ -452,13 +453,11 @@ function renderLeaveChart() {
 
 document.addEventListener("DOMContentLoaded", () => {
 async function generatePayslip(index) {
-  const { jsPDF } = window.jspdf;
   if (!jsPDF) return alert("jsPDF not loaded.");
 
   const emp = staff[index];
 
   // ====== INITIALIZE PDF ======
-const { jsPDF } = window.jspdf;
 const pdf = new jsPDF({ unit: "mm", format: "a4" });
 
 
