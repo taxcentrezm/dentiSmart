@@ -4,15 +4,26 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SmartDent ERP — HR</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/feather-icons"></script>
   <style>
     .card { @apply bg-white rounded-2xl shadow p-4; }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Tailwind & icons -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/feather-icons"></script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- jsPDF UMD -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+<!-- QR library -->
 <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
 
+<!-- FONTS -->
+<script src="doksen-normal.js"></script>
+<script src="Poppins-Regular-normal.js"></script>
+<script src="Poppins-Bold-bold.js"></script>
 
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 antialiased">
@@ -104,10 +115,7 @@
     SmartDent ERP • Human Resources & Payroll
   </footer>
   <script src="core.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="doksen-normal.js"></script>
-<script src="Poppins-Regular-normal.js"></script>
-<script src="Poppins-Bold-bold.js"></script>
+
   <!-- Scripts -->
 <script>
   feather.replace();
@@ -442,7 +450,7 @@ function renderLeaveChart() {
     renderStaff();
   }
 
-  window.onload = () => {
+document.addEventListener("DOMContentLoaded", () => {
 async function generatePayslip(index) {
   const { jsPDF } = window.jspdf;
   if (!jsPDF) return alert("jsPDF not loaded.");
@@ -450,16 +458,9 @@ async function generatePayslip(index) {
   const emp = staff[index];
 
   // ====== INITIALIZE PDF ======
-  const pdf = new jsPDF({ unit: "mm", format: "a4" });
+const { jsPDF } = window.jspdf;
+const pdf = new jsPDF({ unit: "mm", format: "a4" });
 
-  // ====== FONT SETUP ======
-  // Fonts should already be loaded via js files:
-  // Doksan-normal.js, Poppins-normal.js, Poppins-bold.js
-  pdf.addFont("Doksan-normal.ttf", "Doksan", "normal");
-  pdf.addFont("Poppins-normal.ttf", "Poppins", "normal");
-  pdf.addFont("Poppins-bold.ttf", "Poppins", "bold");
-
-  const themeColor = [34, 197, 94]; // SmartDent green
 
   // ====== PAY DATA ======
   const earnings = { Basic: emp.salary, Transport: 500, Food: 300, Housing: 800, Bonus: 200 };
@@ -604,7 +605,7 @@ async function generatePayslip(index) {
   img.onerror = () => alert("❌ Failed to load logo image.");
 }
 
-  }
+  });
 
   // ============================
   // INIT
