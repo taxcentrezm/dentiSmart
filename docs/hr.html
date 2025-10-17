@@ -524,37 +524,44 @@ document.addEventListener("DOMContentLoaded", () => {
       pdf.text(emp.department, 118, 55);
       pdf.text(new Date().toLocaleDateString(), 163, 55);
 
-      // ====== EARNINGS / DEDUCTIONS TABLE ======
-      let y = 60;
-      pdf.setFontSize(12);
-      pdf.setFillColor(245,245,245);
-      pdf.rect(15, y, 180, 8, "F");
-      pdf.setFont("Poppins", "bold");
-      pdf.text("EARNINGS", 25, y+5);
-      pdf.text("DEDUCTIONS", 120, y+5);
+     // ====== EARNINGS / DEDUCTIONS TABLE ======
+let y = 60;
+pdf.setFontSize(12);
+pdf.setFillColor(245, 245, 245);
+pdf.rect(15, y, 180, 8, "F");
 
-      y += 8;
-      pdf.setFont("Poppins-Regular", "normal");
-      const rows = Math.max(Object.keys(earnings).length, Object.keys(deductions).length);
-      for(let i=0;i<rows;i++){
-        const eLabel = Object.keys(earnings)[i], eVal = Object.values(earnings)[i];
-        const dLabel = Object.keys(deductions)[i], dVal = Object.values(deductions)[i];
+// Table headers
+pdf.setFont("Poppins-Bold", "bold");
+pdf.text("EARNINGS", 25, y + 5);
+pdf.text("DEDUCTIONS", 120, y + 5);
 
-        if(eLabel) pdf.text(eLabel, 25, y);
-        if(eVal) pdf.text(`$${eVal.toFixed(2)}`, 80, y, {align:"right"});
-        if(dLabel) pdf.text(dLabel, 120, y);
-        if(dVal) pdf.text(`$${dVal.toFixed(2)}`, 185, y, {align:"right"});
-        y += 7;
-      }
+// Move down before first row
+y += 15; // was 8 → gives better separation
 
-      // Totals
-      pdf.setDrawColor(...themeColor);
-      pdf.line(15, y+2, 195, y+2);
-      pdf.setFont("Poppins", "bold");
-      pdf.text("Total Earnings:", 25, y+8);
-      pdf.text(`$${totalEarnings.toFixed(2)}`, 80, y+8, {align:"right"});
-      pdf.text("Total Deductions:", 120, y+8);
-      pdf.text(`$${totalDeductions.toFixed(2)}`, 185, y+8, {align:"right"});
+// Table rows
+pdf.setFont("Poppins-Regular", "normal");
+const rows = Math.max(Object.keys(earnings).length, Object.keys(deductions).length);
+for (let i = 0; i < rows; i++) {
+  const eLabel = Object.keys(earnings)[i], eVal = Object.values(earnings)[i];
+  const dLabel = Object.keys(deductions)[i], dVal = Object.values(deductions)[i];
+
+  if (eLabel) pdf.text(eLabel, 25, y);
+  if (eVal) pdf.text(`$${eVal.toFixed(2)}`, 80, y, { align: "right" });
+  if (dLabel) pdf.text(dLabel, 120, y);
+  if (dVal) pdf.text(`$${dVal.toFixed(2)}`, 185, y, { align: "right" });
+
+  y += 7;
+}
+
+// Totals
+pdf.setDrawColor(...themeColor);
+pdf.line(15, y + 2, 195, y + 2);
+pdf.setFont("Poppins-Bold", "bold");
+pdf.text("Total Earnings:", 25, y + 8);
+pdf.text(`$${totalEarnings.toFixed(2)}`, 80, y + 8, { align: "right" });
+pdf.text("Total Deductions:", 120, y + 8);
+pdf.text(`$${totalDeductions.toFixed(2)}`, 185, y + 8, { align: "right" });
+
 
       // Net Pay
       pdf.setFontSize(14);
@@ -563,7 +570,7 @@ document.addEventListener("DOMContentLoaded", () => {
       pdf.text(`$${netPay.toFixed(2)}`, 80, y+20, {align:"right"});
 
       // ====== YTD TABLE ======
-      pdf.setFont("Poppins", "bold");
+      pdf.setFont("Poppins-Bold", "bold");
       pdf.setFontSize(11);
       pdf.text("Year-to-Date Summary", 15, y+40);
       pdf.setFillColor(240,240,240);
@@ -572,7 +579,7 @@ document.addEventListener("DOMContentLoaded", () => {
       pdf.text("Description", 20, y+48);
       pdf.text("Amount (ZMW)", 100, y+48);
 
-      pdf.setFont("Poppins", "normal");
+      pdf.setFont("Poppins-Regular", "normal");
       pdf.setFillColor(255,255,255);
       pdf.rect(15, y+51, 180, 7, "F");
       pdf.rect(15, y+58, 180, 7, "F");
