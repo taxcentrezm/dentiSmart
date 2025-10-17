@@ -451,160 +451,163 @@ function renderLeaveChart() {
     renderStaff();
   }
 
+ 
 document.addEventListener("DOMContentLoaded", () => {
-window.generatePayslip = async function(index) {
-  if (!jsPDF) return alert("jsPDF not loaded.");
+  window.generatePayslip = async function(index) {
+    // ✅ Get jsPDF from UMD
+    const { jsPDF } = window.jspdf;
+    if (!jsPDF) return alert("❌ jsPDF not loaded.");
 
-  const emp = staff[index];
+    const themeColor = [34, 197, 94]; // SmartDent green
+    const emp = staff[index];
 
-  // ====== INITIALIZE PDF ======
-const pdf = new jsPDF({ unit: "mm", format: "a4" });
+    // ====== INITIALIZE PDF ======
+    const pdf = new jsPDF({ unit: "mm", format: "a4" });
 
+    // ====== FONT SETUP ======
+    // Ensure your font scripts (doksen-normal.js, Poppins-Regular-normal.js, Poppins-Bold-bold.js) are loaded AFTER jsPDF
+    pdf.addFont("Doksan-normal.ttf", "Doksan", "normal");
+    pdf.addFont("Poppins-normal.ttf", "Poppins", "normal");
+    pdf.addFont("Poppins-bold.ttf", "Poppins", "bold");
 
-  // ====== PAY DATA ======
-  const earnings = { Basic: emp.salary, Transport: 500, Food: 300, Housing: 800, Bonus: 200 };
-  const deductions = { PAYE: emp.salary * 0.15, NAPSA: emp.salary * 0.05, NHIMA: emp.salary * 0.01, Loan: 250 };
-  const totalEarnings = Object.values(earnings).reduce((a,b)=>a+b,0);
-  const totalDeductions = Object.values(deductions).reduce((a,b)=>a+b,0);
-  const netPay = totalEarnings - totalDeductions;
-  const ytdEarnings = totalEarnings * 10;
-  const ytdDeductions = totalDeductions * 10;
+    // ====== PAY DATA ======
+    const earnings = { Basic: emp.salary, Transport: 500, Food: 300, Housing: 800, Bonus: 200 };
+    const deductions = { PAYE: emp.salary * 0.15, NAPSA: emp.salary * 0.05, NHIMA: emp.salary * 0.01, Loan: 250 };
+    const totalEarnings = Object.values(earnings).reduce((a,b)=>a+b,0);
+    const totalDeductions = Object.values(deductions).reduce((a,b)=>a+b,0);
+    const netPay = totalEarnings - totalDeductions;
+    const ytdEarnings = totalEarnings * 10; // example YTD
+    const ytdDeductions = totalDeductions * 10;
 
-  const month = new Date().toLocaleString("en-US", { month: "long" });
-  const year = new Date().getFullYear();
-  const payrollPeriod = `${month} 01 – ${month} 31, ${year}`;
-  const employeeId = "EMP-" + (index+1).toString().padStart(4,"0");
-  const logoUrl = "logo.jpeg";
+    const month = new Date().toLocaleString("en-US", { month: "long" });
+    const year = new Date().getFullYear();
+    const payrollPeriod = `${month} 01 – ${month} 31, ${year}`;
+    const employeeId = "EMP-" + (index+1).toString().padStart(4,"0");
+    const logoUrl = "logo.jpeg";
 
-  // ====== LOAD LOGO ======
-  const img = new Image();
-  img.crossOrigin = "Anonymous";
-  img.src = logoUrl;
+    // ====== LOAD LOGO ======
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.src = logoUrl;
 
-  img.onload = () => {
-    // ====== HEADER ======
-    const logoWidth = 25;
-    const logoHeight = 25;
-    const logoX = 15;
-    const logoY = 10;
+    img.onload = () => {
+      // ====== HEADER ======
+      const logoWidth = 25, logoHeight = 25;
+      pdf.addImage(img, "PNG", 15, 10, logoWidth, logoHeight);
 
-    pdf.addImage(img, "PNG", logoX, logoY, logoWidth, logoHeight);
+      // Company name
+      pdf.setFont("Doksan", "normal");
+      pdf.setFontSize(16);
+      pdf.setTextColor(...themeColor);
+      pdf.text("SmartDent Clinic", 15 + logoWidth + 5, 26);
 
-    // Company name
-    pdf.setFont("Doksan", "normal");
-    pdf.setFontSize(16);
-    pdf.setTextColor(...themeColor);
-    pdf.text("SmartDent Clinic", logoX + logoWidth + 5, logoY + 16);
+      // Payslip subtitle
+      pdf.setFont("Poppins", "bold");
+      pdf.setFontSize(12);
+      pdf.setTextColor(0);
+      pdf.text("— Payslip —", 15 + logoWidth + 5, 33);
 
-    // Payslip subtitle
-    pdf.setFont("Poppins", "bold");
-    pdf.setFontSize(12);
-    pdf.setTextColor(0);
-    pdf.text("— Payslip —", logoX + logoWidth + 5, logoY + 23);
+      // Payroll info
+      pdf.setFont("Poppins", "normal");
+      pdf.setFontSize(10);
+      pdf.text(`Payroll Period: ${payrollPeriod}`, 15, 45);
+      pdf.text(`Employee ID: ${employeeId}`, 150, 45);
 
-    // Payroll info
-    pdf.setFont("Poppins", "normal");
-    pdf.setFontSize(10);
-    pdf.text(`Payroll Period: ${payrollPeriod}`, 15, logoY + logoHeight + 10);
-    pdf.text(`Employee ID: ${employeeId}`, 150, logoY + logoHeight + 10);
+      // Employee details
+      pdf.setFontSize(8);
+      pdf.text("Name:", 15, 55);
+      pdf.text("Role:", 65, 55);
+      pdf.text("Dept:", 105, 55);
+      pdf.text("Date:", 150, 55);
 
-    // ====== EMPLOYEE DETAILS (ONE ROW) ======
-    pdf.setFontSize(8);
-    pdf.text("Name:", 15, 42);
-    pdf.text("Role:", 65, 42);
-    pdf.text("Dept:", 105, 42);
-    pdf.text("Date:", 150, 42);
+      pdf.setFont("Poppins", "normal");
+      pdf.text(emp.name, 28, 55);
+      pdf.text(emp.role, 77, 55);
+      pdf.text(emp.department, 118, 55);
+      pdf.text(new Date().toLocaleDateString(), 163, 55);
 
-    pdf.setFont("Poppins", "normal");
-    pdf.text(emp.name, 28, 42);
-    pdf.text(emp.role, 77, 42);
-    pdf.text(emp.department, 118, 42);
-    pdf.text(new Date().toLocaleDateString(), 163, 42);
+      // ====== EARNINGS / DEDUCTIONS TABLE ======
+      let y = 60;
+      pdf.setFontSize(12);
+      pdf.setFillColor(245,245,245);
+      pdf.rect(15, y, 180, 8, "F");
+      pdf.setFont("Poppins", "bold");
+      pdf.text("EARNINGS", 25, y+5);
+      pdf.text("DEDUCTIONS", 120, y+5);
 
-    // ====== EARNINGS / DEDUCTIONS TABLE ======
-    let y = 50;
-    pdf.setFontSize(12);
-    pdf.setFillColor(245,245,245);
-    pdf.rect(15, y, 180, 8, "F");
-    pdf.setFont("Poppins", "bold");
-    pdf.text("EARNINGS", 25, y+5);
-    pdf.text("DEDUCTIONS", 120, y+5);
+      y += 8;
+      pdf.setFont("Poppins", "normal");
+      const rows = Math.max(Object.keys(earnings).length, Object.keys(deductions).length);
+      for(let i=0;i<rows;i++){
+        const eLabel = Object.keys(earnings)[i], eVal = Object.values(earnings)[i];
+        const dLabel = Object.keys(deductions)[i], dVal = Object.values(deductions)[i];
 
-    y += 8;
-    pdf.setFont("Poppins", "normal");
-    const rows = Math.max(Object.keys(earnings).length, Object.keys(deductions).length);
-    for(let i=0; i<rows; i++){
-      const eLabel = Object.keys(earnings)[i], eVal = Object.values(earnings)[i];
-      const dLabel = Object.keys(deductions)[i], dVal = Object.values(deductions)[i];
+        if(eLabel) pdf.text(eLabel, 25, y);
+        if(eVal) pdf.text(`$${eVal.toFixed(2)}`, 80, y, {align:"right"});
+        if(dLabel) pdf.text(dLabel, 120, y);
+        if(dVal) pdf.text(`$${dVal.toFixed(2)}`, 185, y, {align:"right"});
+        y += 7;
+      }
 
-      if(eLabel) pdf.text(eLabel, 25, y);
-      if(eVal) pdf.text(`$${eVal.toFixed(2)}`, 80, y, {align:"right"});
-      if(dLabel) pdf.text(dLabel, 120, y);
-      if(dVal) pdf.text(`$${dVal.toFixed(2)}`, 185, y, {align:"right"});
-      y += 7;
-    }
+      // Totals
+      pdf.setDrawColor(...themeColor);
+      pdf.line(15, y+2, 195, y+2);
+      pdf.setFont("Poppins", "bold");
+      pdf.text("Total Earnings:", 25, y+8);
+      pdf.text(`$${totalEarnings.toFixed(2)}`, 80, y+8, {align:"right"});
+      pdf.text("Total Deductions:", 120, y+8);
+      pdf.text(`$${totalDeductions.toFixed(2)}`, 185, y+8, {align:"right"});
 
-    // Totals
-    pdf.setDrawColor(...themeColor);
-    pdf.line(15, y+2, 195, y+2);
-    pdf.setFont("Poppins", "bold");
-    pdf.text("Total Earnings:", 25, y+8);
-    pdf.text(`$${totalEarnings.toFixed(2)}`, 80, y+8, {align:"right"});
-    pdf.text("Total Deductions:", 120, y+8);
-    pdf.text(`$${totalDeductions.toFixed(2)}`, 185, y+8, {align:"right"});
+      // Net Pay
+      pdf.setFontSize(14);
+      pdf.setTextColor(...themeColor);
+      pdf.text("Net Pay:", 25, y+20);
+      pdf.text(`$${netPay.toFixed(2)}`, 80, y+20, {align:"right"});
 
-    // Net Pay
-    pdf.setFontSize(14);
-    pdf.setTextColor(...themeColor);
-    pdf.text("Net Pay:", 25, y+20);
-    pdf.text(`$${netPay.toFixed(2)}`, 80, y+20, {align:"right"});
+      // ====== YTD TABLE ======
+      pdf.setFont("Poppins", "bold");
+      pdf.setFontSize(11);
+      pdf.text("Year-to-Date Summary", 15, y+40);
+      pdf.setFillColor(240,240,240);
+      pdf.rect(15, y+43, 180, 8, "F");
+      pdf.setFontSize(10);
+      pdf.text("Description", 20, y+48);
+      pdf.text("Amount (ZMW)", 100, y+48);
 
-    // ====== YTD TABLE ======
-    pdf.setFont("Poppins", "bold");
-    pdf.setFontSize(11);
-    pdf.text("Year-to-Date Summary", 15, y+35);
-    pdf.setFillColor(240,240,240);
-    pdf.rect(15, y+38, 180, 8, "F");
-    pdf.setFontSize(10);
-    pdf.text("Description", 20, y+43);
-    pdf.text("Amount (ZMW)", 100, y+43);
+      pdf.setFont("Poppins", "normal");
+      pdf.setFillColor(255,255,255);
+      pdf.rect(15, y+51, 180, 7, "F");
+      pdf.rect(15, y+58, 180, 7, "F");
+      pdf.text("YTD Earnings", 20, y+55);
+      pdf.text(`ZMW ${ytdEarnings.toFixed(2)}`, 100, y+55);
+      pdf.text("YTD Deductions", 20, y+62);
+      pdf.text(`ZMW ${ytdDeductions.toFixed(2)}`, 100, y+62);
 
-    pdf.setFont("Poppins", "normal");
-    pdf.setFillColor(255,255,255);
-    pdf.rect(15, y+46, 180, 7, "F");
-    pdf.rect(15, y+53, 180, 7, "F");
-    pdf.text("YTD Earnings", 20, y+51);
-    pdf.text(`ZMW ${ytdEarnings.toFixed(2)}`, 100, y+51);
-    pdf.text("YTD Deductions", 20, y+58);
-    pdf.text(`ZMW ${ytdDeductions.toFixed(2)}`, 100, y+58);
+      // ====== QR CODE ======
+      const qrCanvas = document.createElement("canvas");
+      new QRious({element: qrCanvas, value:`https://smartdent.com/payslip/${employeeId}`, size:100});
+      pdf.addImage(qrCanvas.toDataURL("image/png"), "PNG", 150, 210, 40, 40);
 
-    pdf.setDrawColor(230,230,230);
-    pdf.line(15, y+63, 195, y+63);
+      // ====== SIGNATURE ======
+      pdf.setFontSize(10);
+      pdf.text("Authorized Signature: ___________________________", 15, 265);
 
-    // ====== QR CODE ======
-    const qrCanvas = document.createElement("canvas");
-    new QRious({element: qrCanvas, value:`https://smartdent.com/payslip/${employeeId}`, size:100});
-    pdf.addImage(qrCanvas.toDataURL("image/png"), "PNG", 150, 210, 40, 40);
+      // ====== FOOTER ======
+      pdf.setDrawColor(230,57,70);
+      pdf.line(15,270,195,270);
+      pdf.setFontSize(10);
+      pdf.setTextColor(100);
+      pdf.text("SmartDent Clinic • +260 97 000 0000 • info@smartdent.com", 15, 275);
 
-    // ====== SIGNATURE ======
-    pdf.setFontSize(10);
-    pdf.text("Authorized Signature: ___________________________", 15, 265);
+      // ====== SAVE PDF ======
+      pdf.save(`Payslip-${emp.name.replace(/\s+/g,"-")}.pdf`);
+    };
 
-    // ====== FOOTER ======
-    pdf.setDrawColor(230,57,70);
-    pdf.line(15,270,195,270);
-    pdf.setFontSize(10);
-    pdf.setTextColor(100);
-    pdf.text("SmartDent Clinic • +260 97 000 0000 • info@smartdent.com", 15, 275);
-
-    // ====== SAVE ======
-    pdf.save(`Payslip-${emp.name.replace(/\s+/g,"-")}.pdf`);
+    img.onerror = () => alert("❌ Failed to load logo image.");
   };
+});
+ 
 
-  img.onerror = () => alert("❌ Failed to load logo image.");
-}
-
-  });
 
   // ============================
   // INIT
