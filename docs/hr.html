@@ -28,9 +28,9 @@
         <div class="font-semibold text-lg">SmartDent ERP</div>
       </div>
       <div class="flex items-center gap-3">
-        <button class="bg-white/90 text-green-600 px-3 py-2 rounded-md inline-flex items-center gap-2 shadow-sm">
-          <i data-feather="user-plus"></i> Add Staff
-        </button>
+        <button onclick="openStaffModal()" class="bg-white/90 text-green-600 px-3 py-2 rounded-md inline-flex items-center gap-2 shadow-sm">
+  <i data-feather="user-plus"></i> Add Staff
+</button>
         <div class="relative">
           <button class="flex items-center gap-2 bg-white/90 px-3 py-2 rounded-full shadow-sm">
             <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=100&auto=format&fit=crop" class="w-8 h-8 rounded-full object-cover">
@@ -65,6 +65,7 @@
   <canvas id="payrollChart" height="200"></canvas>
 </div>
     </div>
+    
 
     <!-- Leave Tracker -->
     <div class="card">
@@ -72,6 +73,12 @@
       <ul id="leaveTracker" class="space-y-2 text-sm"></ul>
     </div>
   </div>
+   <div class="card">
+  <h3 class="font-semibold mb-3">Leave Tracker</h3>
+  <ul id="leaveTracker" class="space-y-2 text-sm"></ul>
+  <canvas id="leaveChart" height="200" class="mt-6"></canvas>
+</div>
+
 
   <!-- Add Staff Modal -->
   <div id="staffModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
@@ -99,7 +106,7 @@
   <!-- Scripts -->
 <script>
   feather.replace();
-
+let payrollChartInstance = null;
   let staff = [];
 
   // ============================
@@ -219,36 +226,41 @@
   }
 
   function renderPayrollChart() {
-    const ctx = document.getElementById("payrollChart").getContext("2d");
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const ctx = document.getElementById('payrollChart').getContext('2d');
 
-    const totals = months.map(month =>
-      staff.reduce((sum, emp) => {
-        const entry = emp.payroll?.find(p => p.month === month);
-        return sum + (entry?.net || 0);
-      }, 0)
-    );
-
-    new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: months,
-        datasets: [
-          {
-            label: "Total Net Payroll",
-            data: totals,
-            backgroundColor: "rgba(34,197,94,0.6)",
-            borderColor: "rgba(34,197,94,1)",
-            borderWidth: 1,
-          },
-        ],
-      },
-      options: {
-        scales: { y: { beginAtZero: true } },
-      },
-    });
+  // Destroy previous chart if it exists
+  if (payrollChartInstance) {
+    payrollChartInstance.destroy();
   }
 
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const totals = months.map(month =>
+    staff.reduce((sum, emp) => {
+      const entry = emp.payroll?.find(p => p.month === month);
+      return sum + (entry?.net || 0);
+    }, 0)
+  );
+
+  payrollChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'Total Net Payroll',
+        data: totals,
+        backgroundColor: 'rgba(34,197,94,0.6)',
+        borderColor: 'rgba(34,197,94,1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
   function renderLeaveTracker() {
     const ul = document.getElementById("leaveTracker");
     ul.innerHTML = "";
@@ -348,32 +360,103 @@
   }
 
   function generatePayslip(index) {
-    const { jsPDF } = window.jspdf;
-    const emp = staff[index];
-    const pdf = new jsPDF();
+  const { jsPDF } = window.jspdf;
+  const emp = staff[index];
+  const pdf = new jsPDF();
 
-    pdf.setFontSize(16);
-    pdf.text("SmartDent ERP — Payslip", 15, 20);
-    pdf.setFontSize(12);
-    pdf.text(`Name: ${emp.name}`, 15, 35);
-    pdf.text(`Role: ${emp.role}`, 15, 42);
-    pdf.text(`Department: ${emp.department}`, 15, 49);
-    pdf.text(`Gross Salary: $${emp.salary}`, 15, 56);
-    pdf.text(`Net Salary: $${(emp.salary * 0.88).toFixed(2)}`, 15, 63);
-    pdf.text(`Leave Balance: ${emp.leave || 0} days`, 15, 70);
-    pdf.text(`Date: ${new Date().toLocaleDateString()}`, 15, 77);
-    pdf.text("Authorized Signature: ___________________________", 15, 95);
-    pdf.save(`Payslip-${emp.name.replace(/\s+/g, "-")}.pdf`);
-  }
+  // Sample values (replace with real logic or stored values)
+  const payrollPeriod = 'Oct 01 – Oct 31, 2025';
+  const taxWeek = 'Week 40';
+  const employeeId = 'EMP-' + (index + 1).toString().padStart(4, '0');
+
+  const earnings = {
+    basic: emp.salary,
+    transport: 500,
+    food: 300,
+    housing: 800,
+    bonus: 200
+  };
+
+  const deductions = {
+    paye: emp.salary * 0.15,
+    napsa: emp.salary * 0.05,
+    nimha: emp.salary * 0.01,
+    loan: 250
+  };
+
+  const totalEarnings = Object.values(earnings).reduce((a, b) => a + b, 0);
+  const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0);
+  const netPay = totalEarnings - totalDeductions;
+
+  const ytdEarnings = totalEarnings * 10; // example
+  const ytdDeductions = totalDeductions * 10;
+
+  // Header
+  pdf.setFontSize(16);
+  pdf.text('SmartDent ERP — Payslip', 15, 20);
+  pdf.setFontSize(10);
+  pdf.text(`Payroll Period: ${payrollPeriod}`, 15, 28);
+  pdf.text(`Tax Week: ${taxWeek}`, 150, 28);
+
+  // Employee Info
+  pdf.setFontSize(12);
+  pdf.text(`Name: ${emp.name}`, 15, 38);
+  pdf.text(`Role: ${emp.role}`, 15, 45);
+  pdf.text(`Department: ${emp.department}`, 15, 52);
+  pdf.text(`Employee ID: ${employeeId}`, 15, 59);
+
+  // Earnings Table
+  pdf.setFontSize(12);
+  pdf.text('Earnings', 15, 70);
+  let y = 75;
+  Object.entries(earnings).forEach(([label, value]) => {
+    pdf.text(label.charAt(0).toUpperCase() + label.slice(1), 20, y);
+    pdf.text(`$${value.toFixed(2)}`, 100, y);
+    y += 7;
+  });
+
+  // Deductions Table
+  pdf.text('Deductions', 15, y + 5);
+  y += 10;
+  Object.entries(deductions).forEach(([label, value]) => {
+    pdf.text(label.toUpperCase(), 20, y);
+    pdf.text(`$${value.toFixed(2)}`, 100, y);
+    y += 7;
+  });
+
+  // Net Pay
+  pdf.setFontSize(12);
+  pdf.text('Net Pay:', 20, y + 10);
+  pdf.text(`$${netPay.toFixed(2)}`, 100, y + 10);
+
+  // YTD Summary
+  pdf.setFontSize(12);
+  pdf.text('Year-to-Date Summary', 15, y + 25);
+  pdf.setFontSize(10);
+  pdf.text(`YTD Earnings: $${ytdEarnings.toFixed(2)}`, 20, y + 32);
+  pdf.text(`YTD Deductions: $${ytdDeductions.toFixed(2)}`, 20, y + 39);
+
+  // Footer
+  pdf.setDrawColor(230, 57, 70);
+  pdf.line(15, 270, 195, 270);
+  pdf.setFontSize(10);
+  pdf.setTextColor(100);
+  pdf.text('SmartDent Clinic • +260 97 000 0000 • info@smartdent.com', 15, 275);
+  pdf.text('Authorized Signature: ___________________________', 15, 265);
+
+  pdf.save(`Payslip-${emp.name.replace(/\s+/g, '-')}.pdf`);
+}
+
 
   // ============================
   // INIT
   // ============================
-  loadStaff();
-  renderStaff();
-  renderLeaveTracker();
-  renderPayrollSummary();
-  renderPayrollChart();
+loadStaff();
+renderStaff();
+renderLeaveTracker();
+renderPayrollSummary();
+renderPayrollChart();
+renderLeaveChart();
 </script>
 </body>
 </html>
