@@ -424,31 +424,33 @@ function renderLeaveChart() {
 
 async function generatePayslip(index) {
   const { jsPDF } = window.jspdf;
+  const emp = staff[index];
 
-  // ====== LOAD CUSTOM FONT (Poppins) ======
-  if (!window.customFontLoaded) {
+  const pdf = new jsPDF({ unit: "mm", format: "a4" });
+
+  // ====== LOAD FONTS ======
+  // Load Poppins (normal)
+  if (!window.fontsLoaded) {
     try {
-      const res = await fetch("https://cdn.jsdelivr.net/gh/google/fonts/ofl/poppins/Poppins-Regular.ttf");
-      const buffer = await res.arrayBuffer();
-      const uint8Array = new Uint8Array(buffer);
-      const fontBase64 = btoa(String.fromCharCode(...uint8Array));
+      const poppinsRes = await fetch("https://cdn.jsdelivr.net/gh/google/fonts/ofl/poppins/Poppins-Regular.ttf");
+      const poppinsBuffer = await poppinsRes.arrayBuffer();
+      const poppinsBase64 = btoa(String.fromCharCode(...new Uint8Array(poppinsBuffer)));
+      pdf.addFileToVFS("Poppins-Regular.ttf", poppinsBase64);
+      pdf.addFont("Poppins-Regular.ttf", "Poppins", "normal");
 
-      // Must instantiate jsPDF before calling addFileToVFS
-      const tempPDF = new jsPDF();
-      tempPDF.addFileToVFS("Poppins-Regular.ttf", fontBase64);
-      tempPDF.addFont("Poppins-Regular.ttf", "Poppins", "normal");
+      // Load Doksan for company name
+      const doksanRes = await fetch("https://cdn.jsdelivr.net/gh/google/fonts/ofl/doksan/Doksan-Regular.ttf");
+      const doksanBuffer = await doksanRes.arrayBuffer();
+      const doksanBase64 = btoa(String.fromCharCode(...new Uint8Array(doksanBuffer)));
+      pdf.addFileToVFS("Doksan-Regular.ttf", doksanBase64);
+      pdf.addFont("Doksan-Regular.ttf", "Doksan", "normal");
 
-      // Register globally (so next PDFs can use it)
-      jsPDF.API.events.push(["addFonts", function () {
-        this.addFileToVFS("Poppins-Regular.ttf", fontBase64);
-        this.addFont("Poppins-Regular.ttf", "Poppins", "normal");
-      }]);
-
-      window.customFontLoaded = true;
+      window.fontsLoaded = true;
     } catch (err) {
-      console.warn("⚠️ Failed to load custom font, falling back to Helvetica.", err);
+      console.warn("⚠️ Failed to load custom fonts, falling back to Helvetica.", err);
     }
   }
+
 
   // ====== INITIALIZE PDF ======
   const pdf = new jsPDF({ unit: "mm", format: "a4" });
@@ -492,20 +494,51 @@ async function generatePayslip(index) {
   img.src = logoUrl;
 
   img.onload = () => {
-    // ====== HEADER ======
-    pdf.addImage(img, "PNG", 15, 10, 30, 15);
-    pdf.setFont("Poppins", "bold");
-    pdf.setFontSize(14);
-    pdf.setTextColor(...themeColor);
-    pdf.text("SmartDent Clinic — Payslip", 50, 20);
+ // ====== HEADER ======
 
-    pdf.setFont("Poppins", "normal");
-    pdf.setFontSize(10);
-    pdf.setTextColor(0);
-    pdf.text(`Payroll Period: ${payrollPeriod}`, 15, 30);
-    pdf.text(`Employee ID: ${employeeId}`, 150, 30);
+// Set company name and payslip text first to measure width
+pdf.setFont("Doksan", "normal");
+pdf.setFontSize(16);
+pdf.setTextColor(...themeColor);
+const companyName = "SMAITDent Clinic";
+const companyWidth = pdf.getTextWidth(companyName);
 
- 
+pdf.setFont("Poppins", "normal");
+pdf.setFontSize(12);
+const payslipText = "— Payslip —";
+const payslipWidth = pdf.getTextWidth(payslipText);
+
+// Position logo dynamically
+const logoWidth = 25;   // adjust as needed
+const logoHeight = 25;  // adjust as needed
+const logoX = 15;       // left margin
+const logoY = 10;
+
+// Draw logo
+pdf.addImage(img, "PNG", logoX, logoY, logoWidth, logoHeight);
+
+// Company name (right of logo)
+const textX = logoX + logoWidth + 5; // small gap between logo and text
+const textY = logoY + 15;            // vertically aligned to logo
+pdf.setFont("Doksan", "normal");
+pdf.setFontSize(16);
+pdf.setTextColor(...themeColor);
+pdf.text(companyName, textX, textY);
+
+// Payslip subtitle (centered under company name)
+pdf.setFont("Poppins", "normal");
+pdf.setFontSize(12);
+pdf.setTextColor(0);
+pdf.text(payslipText, textX, textY + 8);
+
+// Payroll info
+pdf.setFont("Poppins", "normal");
+pdf.setFontSize(10);
+pdf.setTextColor(0);
+pdf.text(`Payroll Period: ${payrollPeriod}`, 15, logoY + logoHeight + 10);
+pdf.text(`Employee ID: ${employeeId}`, 150, logoY + logoHeight + 10);
+
+
 // ====== EMPLOYEE DETAILS (COMPACT ONE ROW) ======
 pdf.setFontSize(8);
 pdf.setTextColor(0);
