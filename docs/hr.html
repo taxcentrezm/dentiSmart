@@ -10,6 +10,8 @@
     .card { @apply bg-white rounded-2xl shadow p-4; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 antialiased">
@@ -103,50 +105,86 @@
   // Load staff from localStorage or initialize default
   function loadStaff() {
     const stored = localStorage.getItem('smartdent_staff');
-    staff = stored ? JSON.parse(stored) : [
-      {
-        name: 'Dr. Alice Mwansa',
-        role: 'Dentist',
-        salary: 5000,
-        photo: 'female (2).jpg',
-        department: 'Dental',
-        leave: 2,
-        payroll: [{ month: 'Oct', net: 4400 }]
-      },
-      {
-        name: 'Dr. Brian Zulu',
-        role: 'Orthodontist',
-        salary: 6200,
-        photo: 'male (2).jpg',
-        department: 'Ortho',
-        leave: 1,
-        payroll: [{ month: 'Oct', net: 5456 }]
-      },
-      {
-        name: 'Nurse Chipo',
-        role: 'Dental Nurse',
-        salary: 1200,
-        photo: 'female (1).jpg',
-        department: 'Support',
-        leave: 1,
-        payroll: [{ month: 'Oct', net: 1056 }]
-      },
-      {
-        name: 'Receptionist Tinashe',
-        role: 'Admin',
-        salary: 900,
-        photo: 'male (1).jpg',
-        department: 'Admin',
-        leave: 0,
-        payroll: [{ month: 'Oct', net: 792 }]
-      }
-    ];
-    saveStaff();
+  staff = stored ? JSON.parse(stored) : [
+  {
+    name: 'Dr. Alice Mwansa',
+    role: 'Dentist',
+    salary: 5000,
+    photo: 'female (2).jpg',
+    department: 'Dental',
+    leave: 2,
+    payroll: [
+      { month: 'Jan', net: 4400 }, { month: 'Feb', net: 4400 }, { month: 'Mar', net: 4400 },
+      { month: 'Apr', net: 4400 }, { month: 'May', net: 4400 }, { month: 'Jun', net: 4400 },
+      { month: 'Jul', net: 4400 }, { month: 'Aug', net: 4400 }, { month: 'Sep', net: 4400 },
+      { month: 'Oct', net: 4400 }, { month: 'Nov', net: 4400 }, { month: 'Dec', net: 4400 }
+    ]
+  },
+  {
+    name: 'Dr. Brian Zulu',
+    role: 'Orthodontist',
+    salary: 6200,
+    photo: 'male (2).jpg',
+    department: 'Ortho',
+    leave: 1,
+    payroll: [
+      { month: 'Jan', net: 5456 }, { month: 'Feb', net: 5456 }, { month: 'Mar', net: 5456 },
+      { month: 'Apr', net: 5456 }, { month: 'May', net: 5456 }, { month: 'Jun', net: 5456 },
+      { month: 'Jul', net: 5456 }, { month: 'Aug', net: 5456 }, { month: 'Sep', net: 5456 },
+      { month: 'Oct', net: 5456 }, { month: 'Nov', net: 5456 }, { month: 'Dec', net: 5456 }
+    ]
+  },
+  {
+    name: 'Nurse Chipo',
+    role: 'Dental Nurse',
+    salary: 1200,
+    photo: 'female (1).jpg',
+    department: 'Support',
+    leave: 1,
+    payroll: [
+      { month: 'Jan', net: 1056 }, { month: 'Feb', net: 1056 }, { month: 'Mar', net: 1056 },
+      { month: 'Apr', net: 1056 }, { month: 'May', net: 1056 }, { month: 'Jun', net: 1056 },
+      { month: 'Jul', net: 1056 }, { month: 'Aug', net: 1056 }, { month: 'Sep', net: 1056 },
+      { month: 'Oct', net: 1056 }, { month: 'Nov', net: 1056 }, { month: 'Dec', net: 1056 }
+    ]
+  },
+  {
+    name: 'Receptionist Tinashe',
+    role: 'Admin',
+    salary: 900,
+    photo: 'male (1).jpg',
+    department: 'Admin',
+    leave: 0,
+    payroll: [
+      { month: 'Jan', net: 792 }, { month: 'Feb', net: 792 }, { month: 'Mar', net: 792 },
+      { month: 'Apr', net: 792 }, { month: 'May', net: 792 }, { month: 'Jun', net: 792 },
+      { month: 'Jul', net: 792 }, { month: 'Aug', net: 792 }, { month: 'Sep', net: 792 },
+      { month: 'Oct', net: 792 }, { month: 'Nov', net: 792 }, { month: 'Dec', net: 792 }
+    ]
   }
+];
+saveStaff();
+
 
   function saveStaff() {
     localStorage.setItem('smartdent_staff', JSON.stringify(staff));
   }
+  function renderPayrollSummary() {
+  const ul = document.getElementById('payrollSummary');
+  const totalStaff = staff.length;
+  const totalPayroll = staff.reduce((sum, emp) => {
+    const latest = emp.payroll?.slice(-1)[0];
+    return sum + (latest?.net || 0);
+  }, 0);
+  const lastRun = staff[0]?.payroll?.slice(-1)[0]?.month || '—';
+
+  ul.innerHTML = `
+    <li class="flex justify-between"><span>Total Staff</span><span>${totalStaff}</span></li>
+    <li class="flex justify-between"><span>Total Payroll</span><span>$${totalPayroll.toLocaleString()}</span></li>
+    <li class="flex justify-between text-green-600"><span>Last Run</span><span>${lastRun}</span></li>
+  `;
+}
+
 
   function renderStaff() {
     const ul = document.getElementById('staffList');
@@ -205,14 +243,66 @@ function renderPayrollChart() {
     }
   });
 }
+  function renderLeaveTracker() {
+  const ul = document.getElementById('leaveTracker');
+  ul.innerHTML = '';
+  staff.forEach(emp => {
+    const li = document.createElement('li');
+    li.className = 'flex justify-between';
+    li.innerHTML = `<span>${emp.name}</span><span>${emp.leave || 0} days</span>`;
+    ul.appendChild(li);
+  });
+}
+
+  function runPayroll() {
+  const today = new Date();
+  const month = today.toLocaleString('en-US', { month: 'short' });
+
+  staff.forEach(emp => {
+    const net = emp.salary * 0.88;
+    emp.payroll = emp.payroll || [];
+    emp.payroll.push({ month, net });
+  });
+
+  saveStaff();
+  renderPayrollSummary();
+  renderPayrollChart();
+}
+
+function exportPayroll() {
+  const { jsPDF } = window.jspdf;
+  if (!jsPDF) {
+    alert('jsPDF is not loaded. Please check your script tag.');
+    return;
+  }
+
+  const pdf = new jsPDF();
+  pdf.setFontSize(16);
+  pdf.text('SmartDent ERP — Payroll Summary', 15, 20);
+
+  let y = 35;
+  staff.forEach(emp => {
+    const latest = emp.payroll?.slice(-1)[0];
+    pdf.setFontSize(12);
+    pdf.text(`${emp.name} (${emp.role})`, 15, y);
+    pdf.text(`Net: $${latest?.net?.toFixed(2) || '0.00'}`, 150, y);
+    y += 10;
+  });
+
+  pdf.save('SmartDent-Payroll-Summary.pdf');
+}
+
 
   function openStaffModal() {
-    document.getElementById('staffModal').style.display = 'flex';
-  }
+  document.getElementById('staffModal').style.display = 'flex';
+}
 
   function closeStaffModal() {
     document.getElementById('staffModal').style.display = 'none';
   }
+
+  document.querySelector('[data-feather="user-plus"]')?.parentElement.addEventListener('click', openStaffModal);
+
 
   function addStaff() {
     const name = document.getElementById('staffName')?.value.trim();
@@ -269,8 +359,11 @@ function renderPayrollChart() {
   document.querySelector('[data-feather="user-plus"]')?.parentElement.addEventListener('click', openStaffModal);
 
   loadStaff();
-  renderStaff();
-  renderPayrollChart();
+renderStaff();
+renderLeaveTracker();
+renderPayrollSummary();
+renderPayrollChart();
+
 </script>
 
 </body>
