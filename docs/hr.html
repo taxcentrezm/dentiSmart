@@ -66,16 +66,16 @@
   <canvas id="payrollChart" height="200"></canvas>
 </div>
     </div>
-    <div class="card">
-  <h3 class="font-semibold mb-3">Leave Tracker</h3>
-  <canvas id="leaveChart" height="200" ></canvas>
-</div>
+    
 
     <!-- Leave Tracker -->
     <div class="card">
       <h3 class="font-semibold mb-3">Leave Tracker</h3>
       <ul id="leaveTracker" class="space-y-2 text-sm"></ul>
     </div>
+    <div class="card">
+  <canvas id="leaveChart" height="200" ></canvas>
+</div>
   </div>
    
 
@@ -393,17 +393,34 @@ function renderLeaveChart() {
   }
 
 
-function generatePayslip(index) {
+async function generatePayslip(index) {
   const { jsPDF } = window.jspdf;
-  const emp = staff[index];
+
+  // ====== LOAD CUSTOM FONT (Poppins) ======
+  if (!window.customFontLoaded) {
+    try {
+      const res = await fetch("https://cdn.jsdelivr.net/gh/google/fonts/ofl/poppins/Poppins-Regular.ttf");
+      const buffer = await res.arrayBuffer();
+      const fontBase64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+      jsPDF.API.addFileToVFS("Poppins-Regular.ttf", fontBase64);
+      jsPDF.API.addFont("Poppins-Regular.ttf", "Poppins", "normal");
+      window.customFontLoaded = true;
+    } catch (err) {
+      console.warn("⚠️ Failed to load custom font, falling back to Helvetica.", err);
+    }
+  }
+
+  // ====== INITIALIZE PDF ======
   const pdf = new jsPDF({ unit: "mm", format: "a4" });
+  pdf.setFont(window.customFontLoaded ? "Poppins" : "helvetica", "normal");
 
   // ====== CONFIGURATION ======
+  const emp = staff[index];
   const month = new Date().toLocaleString("en-US", { month: "long" });
   const year = new Date().getFullYear();
   const payrollPeriod = `${month} 01 – ${month} 31, ${year}`;
   const employeeId = "EMP-" + (index + 1).toString().padStart(4, "0");
-  const logoUrl = "logo.jpeg"; // replace with actual logo path
+  const logoUrl = "logo.jpeg"; // Update as needed
   const themeColor = [34, 197, 94]; // SmartDent green
 
   // ====== MOCK PAY DATA ======
@@ -437,18 +454,18 @@ function generatePayslip(index) {
   img.onload = () => {
     // ====== HEADER ======
     pdf.addImage(img, "PNG", 15, 10, 30, 15);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(16);
+    pdf.setFont("Poppins", "bold");
+    pdf.setFontSize(14);
     pdf.setTextColor(...themeColor);
     pdf.text("SmartDent Clinic — Payslip", 50, 20);
 
+    pdf.setFont("Poppins", "normal");
     pdf.setFontSize(10);
     pdf.setTextColor(0);
     pdf.text(`Payroll Period: ${payrollPeriod}`, 15, 30);
     pdf.text(`Employee ID: ${employeeId}`, 150, 30);
 
     // ====== EMPLOYEE DETAILS ======
-    pdf.setFontSize(12);
     pdf.text(`Name: ${emp.name}`, 15, 40);
     pdf.text(`Role: ${emp.role}`, 15, 47);
     pdf.text(`Department: ${emp.department}`, 15, 54);
@@ -464,7 +481,6 @@ function generatePayslip(index) {
     // ====== TABLE CONTENT ======
     let y = 83;
     pdf.setFontSize(11);
-    pdf.setTextColor(0);
 
     const rows = Math.max(Object.keys(earnings).length, Object.keys(deductions).length);
     for (let i = 0; i < rows; i++) {
@@ -473,15 +489,11 @@ function generatePayslip(index) {
       const dedLabel = Object.keys(deductions)[i];
       const dedValue = Object.values(deductions)[i];
 
-      if (earnLabel)
-        pdf.text(`${earnLabel}`, 25, y);
-      if (earnValue)
-        pdf.text(`$${earnValue.toFixed(2)}`, 80, y, { align: "right" });
+      if (earnLabel) pdf.text(earnLabel, 25, y);
+      if (earnValue) pdf.text(`$${earnValue.toFixed(2)}`, 80, y, { align: "right" });
 
-      if (dedLabel)
-        pdf.text(`${dedLabel}`, 120, y);
-      if (dedValue)
-        pdf.text(`$${dedValue.toFixed(2)}`, 185, y, { align: "right" });
+      if (dedLabel) pdf.text(dedLabel, 120, y);
+      if (dedValue) pdf.text(`$${dedValue.toFixed(2)}`, 185, y, { align: "right" });
 
       y += 7;
     }
@@ -490,7 +502,7 @@ function generatePayslip(index) {
     pdf.setDrawColor(...themeColor);
     pdf.line(15, y + 3, 195, y + 3);
 
-    pdf.setFont("helvetica", "bold");
+    pdf.setFont("Poppins", "bold");
     pdf.text("Total Earnings:", 25, y + 10);
     pdf.text(`$${totalEarnings.toFixed(2)}`, 80, y + 10, { align: "right" });
 
@@ -503,14 +515,32 @@ function generatePayslip(index) {
     pdf.text("Net Pay:", 25, y + 22);
     pdf.text(`$${netPay.toFixed(2)}`, 80, y + 22, { align: "right" });
 
-    // ====== YEAR-TO-DATE ======
-    pdf.setFont("helvetica", "normal");
+    // ====== YEAR-TO-DATE (TABLE) ======
+    pdf.setFont("Poppins", "bold");
     pdf.setFontSize(11);
     pdf.setTextColor(0);
-    pdf.text("Year-to-Date Summary", 15, y + 38);
+    pdf.text("Year-to-Date Summary", 15, y + 35);
+
+    // Header
+    pdf.setFillColor(240, 240, 240);
+    pdf.rect(15, y + 38, 180, 8, "F");
     pdf.setFontSize(10);
-    pdf.text(`YTD Earnings: $${ytdEarnings.toFixed(2)}`, 20, y + 45);
-    pdf.text(`YTD Deductions: $${ytdDeductions.toFixed(2)}`, 20, y + 52);
+    pdf.text("Description", 20, y + 43);
+    pdf.text("Amount (ZMW)", 100, y + 43);
+
+    // Rows
+    pdf.setFont("Poppins", "normal");
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(15, y + 46, 180, 7, "F");
+    pdf.rect(15, y + 53, 180, 7, "F");
+
+    pdf.text("YTD Earnings", 20, y + 51);
+    pdf.text(`ZMW ${ytdEarnings.toFixed(2)}`, 100, y + 51);
+    pdf.text("YTD Deductions", 20, y + 58);
+    pdf.text(`ZMW ${ytdDeductions.toFixed(2)}`, 100, y + 58);
+
+    pdf.setDrawColor(230, 230, 230);
+    pdf.line(15, y + 63, 195, y + 63);
 
     // ====== QR CODE ======
     const qrCanvas = document.createElement("canvas");
@@ -532,19 +562,13 @@ function generatePayslip(index) {
     pdf.setTextColor(100);
     pdf.text("SmartDent Clinic • +260 97 000 0000 • info@smartdent.com", 15, 275);
 
-    // ====== WATERMARK ======
-    pdf.setTextColor(240);
-    pdf.setFontSize(40);
-    pdf.text("SMARTDENT", 60, 160, { angle: 45 });
-
     // ====== SAVE FILE ======
     pdf.save(`Payslip-${emp.name.replace(/\s+/g, "-")}.pdf`);
   };
 
-  img.onerror = () => {
-    alert("❌ Failed to load logo image. Please check the file path.");
-  };
+  img.onerror = () => alert("❌ Failed to load logo image. Please check the file path.");
 }
+
 
 
 
