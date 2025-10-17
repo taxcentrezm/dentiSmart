@@ -107,7 +107,7 @@
   <!-- Scripts -->
 <script>
   feather.replace();
-let payrollChartInstance = null;
+ 
   let staff = [];
 
   // ============================
@@ -233,20 +233,36 @@ function getEmployeeColors() {
   return staff.map((_, i) => palette[i % palette.length]);
 }
 
-  function renderPayrollChart() {
+let payrollChartInstance = null;
+
+function renderPayrollChart() {
   const ctx = document.getElementById('payrollChart').getContext('2d');
 
-  // Destroy previous chart if it exists
   if (payrollChartInstance) {
     payrollChartInstance.destroy();
   }
 
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const allMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const currentMonthIndex = new Date().getMonth(); // 0-based index
+  const months = allMonths.slice(0, currentMonthIndex + 1);
+
   const totals = months.map(month =>
     staff.reduce((sum, emp) => {
       const entry = emp.payroll?.find(p => p.month === month);
       return sum + (entry?.net || 0);
     }, 0)
+  );
+
+  const backgroundColors = months.map((_, i) =>
+    i === currentMonthIndex
+      ? 'rgba(239,68,68,0.7)'   // red for current month
+      : 'rgba(34,197,94,0.6)'   // green for others
+  );
+
+  const borderColors = months.map((_, i) =>
+    i === currentMonthIndex
+      ? 'rgba(239,68,68,1)'
+      : 'rgba(34,197,94,1)'
   );
 
   payrollChartInstance = new Chart(ctx, {
@@ -256,8 +272,8 @@ function getEmployeeColors() {
       datasets: [{
         label: 'Total Net Payroll',
         data: totals,
-        backgroundColor: 'rgba(34,197,94,0.6)',
-        borderColor: 'rgba(34,197,94,1)',
+        backgroundColor: backgroundColors,
+        borderColor: borderColors,
         borderWidth: 1
       }]
     },
@@ -265,10 +281,18 @@ function getEmployeeColors() {
       responsive: true,
       scales: {
         y: { beginAtZero: true }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (context) => `$${context.raw.toLocaleString()}`
+          }
+        }
       }
     }
   });
 }
+
   function renderLeaveTracker() {
     const ul = document.getElementById("leaveTracker");
     ul.innerHTML = "";
@@ -426,7 +450,7 @@ async function generatePayslip(index) {
   const { jsPDF } = window.jspdf;
   const emp = staff[index];
 
-  const pdf = new jsPDF({ unit: "mm", format: "a4" });
+    const pdf = new jsPDF({ unit: "mm", format: "a4" });
 
   // ====== LOAD FONTS ======
   // Load Poppins (normal)
@@ -453,7 +477,7 @@ async function generatePayslip(index) {
 
 
   // ====== INITIALIZE PDF ======
-  const pdf = new jsPDF({ unit: "mm", format: "a4" });
+
   pdf.setFont(window.customFontLoaded ? "Poppins" : "helvetica", "normal");
 
   // ====== CONFIGURATION ======
