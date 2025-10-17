@@ -102,96 +102,100 @@
 
   let staff = [];
 
-  // Load staff from localStorage or initialize default
+  // ============================
+  // LOAD / SAVE STAFF DATA
+  // ============================
   function loadStaff() {
-    const stored = localStorage.getItem('smartdent_staff');
-  staff = stored ? JSON.parse(stored) : [
-  {
-    name: 'Dr. Alice Mwansa',
-    role: 'Dentist',
-    salary: 5000,
-    photo: 'female (2).jpg',
-    department: 'Dental',
-    leave: 2,
-    payroll: [
-      { month: 'Jan', net: 4400 }, { month: 'Feb', net: 4400 }, { month: 'Mar', net: 4400 },
-      { month: 'Apr', net: 4400 }, { month: 'May', net: 4400 }, { month: 'Jun', net: 4400 },
-      { month: 'Jul', net: 4400 }, { month: 'Aug', net: 4400 }, { month: 'Sep', net: 4400 },
-      { month: 'Oct', net: 4400 }, { month: 'Nov', net: 4400 }, { month: 'Dec', net: 4400 }
-    ]
-  },
-  {
-    name: 'Dr. Brian Zulu',
-    role: 'Orthodontist',
-    salary: 6200,
-    photo: 'male (2).jpg',
-    department: 'Ortho',
-    leave: 1,
-    payroll: [
-      { month: 'Jan', net: 5456 }, { month: 'Feb', net: 5456 }, { month: 'Mar', net: 5456 },
-      { month: 'Apr', net: 5456 }, { month: 'May', net: 5456 }, { month: 'Jun', net: 5456 },
-      { month: 'Jul', net: 5456 }, { month: 'Aug', net: 5456 }, { month: 'Sep', net: 5456 },
-      { month: 'Oct', net: 5456 }, { month: 'Nov', net: 5456 }, { month: 'Dec', net: 5456 }
-    ]
-  },
-  {
-    name: 'Nurse Chipo',
-    role: 'Dental Nurse',
-    salary: 1200,
-    photo: 'female (1).jpg',
-    department: 'Support',
-    leave: 1,
-    payroll: [
-      { month: 'Jan', net: 1056 }, { month: 'Feb', net: 1056 }, { month: 'Mar', net: 1056 },
-      { month: 'Apr', net: 1056 }, { month: 'May', net: 1056 }, { month: 'Jun', net: 1056 },
-      { month: 'Jul', net: 1056 }, { month: 'Aug', net: 1056 }, { month: 'Sep', net: 1056 },
-      { month: 'Oct', net: 1056 }, { month: 'Nov', net: 1056 }, { month: 'Dec', net: 1056 }
-    ]
-  },
-  {
-    name: 'Receptionist Tinashe',
-    role: 'Admin',
-    salary: 900,
-    photo: 'male (1).jpg',
-    department: 'Admin',
-    leave: 0,
-    payroll: [
-      { month: 'Jan', net: 792 }, { month: 'Feb', net: 792 }, { month: 'Mar', net: 792 },
-      { month: 'Apr', net: 792 }, { month: 'May', net: 792 }, { month: 'Jun', net: 792 },
-      { month: 'Jul', net: 792 }, { month: 'Aug', net: 792 }, { month: 'Sep', net: 792 },
-      { month: 'Oct', net: 792 }, { month: 'Nov', net: 792 }, { month: 'Dec', net: 792 }
-    ]
-  }
-];
-saveStaff();
+    const stored = localStorage.getItem("smartdent_staff");
+    staff = stored
+      ? JSON.parse(stored)
+      : [
+          {
+            name: "Dr. Alice Mwansa",
+            role: "Dentist",
+            salary: 5000,
+            photo: "female (2).jpg",
+            department: "Dental",
+            leave: 2,
+            payroll: Array.from({ length: 12 }, (_, i) => ({
+              month: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][i],
+              net: 4400,
+            })),
+          },
+          {
+            name: "Dr. Brian Zulu",
+            role: "Orthodontist",
+            salary: 6200,
+            photo: "male (2).jpg",
+            department: "Ortho",
+            leave: 1,
+            payroll: Array.from({ length: 12 }, (_, i) => ({
+              month: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][i],
+              net: 5456,
+            })),
+          },
+          {
+            name: "Nurse Chipo",
+            role: "Dental Nurse",
+            salary: 1200,
+            photo: "female (1).jpg",
+            department: "Support",
+            leave: 1,
+            payroll: Array.from({ length: 12 }, (_, i) => ({
+              month: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][i],
+              net: 1056,
+            })),
+          },
+          {
+            name: "Receptionist Tinashe",
+            role: "Admin",
+            salary: 900,
+            photo: "male (1).jpg",
+            department: "Admin",
+            leave: 0,
+            payroll: Array.from({ length: 12 }, (_, i) => ({
+              month: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][i],
+              net: 792,
+            })),
+          },
+        ];
 
+    saveStaff();
+  }
 
   function saveStaff() {
-    localStorage.setItem('smartdent_staff', JSON.stringify(staff));
+    localStorage.setItem("smartdent_staff", JSON.stringify(staff));
   }
+
+  // ============================
+  // RENDER FUNCTIONS
+  // ============================
   function renderPayrollSummary() {
-  const ul = document.getElementById('payrollSummary');
-  const totalStaff = staff.length;
-  const totalPayroll = staff.reduce((sum, emp) => {
-    const latest = emp.payroll?.slice(-1)[0];
-    return sum + (latest?.net || 0);
-  }, 0);
-  const lastRun = staff[0]?.payroll?.slice(-1)[0]?.month || '—';
+    const ul = document.getElementById("payrollSummary");
+    const totalStaff = staff.length;
 
-  ul.innerHTML = `
-    <li class="flex justify-between"><span>Total Staff</span><span>${totalStaff}</span></li>
-    <li class="flex justify-between"><span>Total Payroll</span><span>$${totalPayroll.toLocaleString()}</span></li>
-    <li class="flex justify-between text-green-600"><span>Last Run</span><span>${lastRun}</span></li>
-  `;
-}
+    const totalPayroll = staff.reduce((sum, emp) => {
+      const latest = emp.payroll?.slice(-1)[0];
+      return sum + (latest?.net || 0);
+    }, 0);
 
+    const lastRun = staff[0]?.payroll?.slice(-1)[0]?.month || "—";
+
+    ul.innerHTML = `
+      <li class="flex justify-between"><span>Total Staff</span><span>${totalStaff}</span></li>
+      <li class="flex justify-between"><span>Total Payroll</span><span>$${totalPayroll.toLocaleString()}</span></li>
+      <li class="flex justify-between text-green-600"><span>Last Run</span><span>${lastRun}</span></li>
+    `;
+  }
 
   function renderStaff() {
-    const ul = document.getElementById('staffList');
-    ul.innerHTML = '';
+    const ul = document.getElementById("staffList");
+    ul.innerHTML = "";
+
     staff.forEach((emp, index) => {
-      const li = document.createElement('li');
-      li.className = 'py-3 flex items-center justify-between';
+      const li = document.createElement("li");
+      li.className = "py-3 flex items-center justify-between";
+
       li.innerHTML = `
         <div class="flex items-center gap-3">
           <img src="${emp.photo}" class="w-10 h-10 rounded-full object-cover border" />
@@ -210,109 +214,115 @@ saveStaff();
       `;
       ul.appendChild(li);
     });
+
     feather.replace();
   }
-function renderPayrollChart() {
-  const ctx = document.getElementById('payrollChart').getContext('2d');
 
-  // Aggregate monthly totals
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const totals = months.map(month => {
-    return staff.reduce((sum, emp) => {
-      const entry = emp.payroll?.find(p => p.month === month);
-      return sum + (entry?.net || 0);
-    }, 0);
-  });
+  function renderPayrollChart() {
+    const ctx = document.getElementById("payrollChart").getContext("2d");
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: months,
-      datasets: [{
-        label: 'Total Net Payroll',
-        data: totals,
-        backgroundColor: 'rgba(34,197,94,0.6)',
-        borderColor: 'rgba(34,197,94,1)',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      scales: {
-        y: { beginAtZero: true }
-      }
-    }
-  });
-}
-  function renderLeaveTracker() {
-  const ul = document.getElementById('leaveTracker');
-  ul.innerHTML = '';
-  staff.forEach(emp => {
-    const li = document.createElement('li');
-    li.className = 'flex justify-between';
-    li.innerHTML = `<span>${emp.name}</span><span>${emp.leave || 0} days</span>`;
-    ul.appendChild(li);
-  });
-}
+    const totals = months.map(month =>
+      staff.reduce((sum, emp) => {
+        const entry = emp.payroll?.find(p => p.month === month);
+        return sum + (entry?.net || 0);
+      }, 0)
+    );
 
-  function runPayroll() {
-  const today = new Date();
-  const month = today.toLocaleString('en-US', { month: 'short' });
-
-  staff.forEach(emp => {
-    const net = emp.salary * 0.88;
-    emp.payroll = emp.payroll || [];
-    emp.payroll.push({ month, net });
-  });
-
-  saveStaff();
-  renderPayrollSummary();
-  renderPayrollChart();
-}
-
-function exportPayroll() {
-  const { jsPDF } = window.jspdf;
-  if (!jsPDF) {
-    alert('jsPDF is not loaded. Please check your script tag.');
-    return;
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: months,
+        datasets: [
+          {
+            label: "Total Net Payroll",
+            data: totals,
+            backgroundColor: "rgba(34,197,94,0.6)",
+            borderColor: "rgba(34,197,94,1)",
+            borderWidth: 1,
+          },
+        ],
+      },
+      options: {
+        scales: { y: { beginAtZero: true } },
+      },
+    });
   }
 
-  const pdf = new jsPDF();
-  pdf.setFontSize(16);
-  pdf.text('SmartDent ERP — Payroll Summary', 15, 20);
+  function renderLeaveTracker() {
+    const ul = document.getElementById("leaveTracker");
+    ul.innerHTML = "";
 
-  let y = 35;
-  staff.forEach(emp => {
-    const latest = emp.payroll?.slice(-1)[0];
-    pdf.setFontSize(12);
-    pdf.text(`${emp.name} (${emp.role})`, 15, y);
-    pdf.text(`Net: $${latest?.net?.toFixed(2) || '0.00'}`, 150, y);
-    y += 10;
-  });
+    staff.forEach(emp => {
+      const li = document.createElement("li");
+      li.className = "flex justify-between";
+      li.innerHTML = `<span>${emp.name}</span><span>${emp.leave || 0} days</span>`;
+      ul.appendChild(li);
+    });
+  }
 
-  pdf.save('SmartDent-Payroll-Summary.pdf');
-}
+  // ============================
+  // PAYROLL ACTIONS
+  // ============================
+  function runPayroll() {
+    const today = new Date();
+    const month = today.toLocaleString("en-US", { month: "short" });
 
+    staff.forEach(emp => {
+      const net = emp.salary * 0.88;
+      emp.payroll = emp.payroll || [];
+      emp.payroll.push({ month, net });
+    });
 
+    saveStaff();
+    renderPayrollSummary();
+    renderPayrollChart();
+  }
+
+  function exportPayroll() {
+    const { jsPDF } = window.jspdf;
+    if (!jsPDF) return alert("jsPDF is not loaded. Please check your script tag.");
+
+    const pdf = new jsPDF();
+    pdf.setFontSize(16);
+    pdf.text("SmartDent ERP — Payroll Summary", 15, 20);
+
+    let y = 35;
+    staff.forEach(emp => {
+      const latest = emp.payroll?.slice(-1)[0];
+      pdf.setFontSize(12);
+      pdf.text(`${emp.name} (${emp.role})`, 15, y);
+      pdf.text(`Net: $${latest?.net?.toFixed(2) || "0.00"}`, 150, y);
+      y += 10;
+    });
+
+    pdf.save("SmartDent-Payroll-Summary.pdf");
+  }
+
+  // ============================
+  // STAFF MODAL & ACTIONS
+  // ============================
   function openStaffModal() {
-  document.getElementById('staffModal').style.display = 'flex';
-}
+    document.getElementById("staffModal").style.display = "flex";
+  }
 
   function closeStaffModal() {
-    document.getElementById('staffModal').style.display = 'none';
+    document.getElementById("staffModal").style.display = "none";
   }
 
-  document.querySelector('[data-feather="user-plus"]')?.parentElement.addEventListener('click', openStaffModal);
-
+  document
+    .querySelector('[data-feather="user-plus"]')
+    ?.parentElement.addEventListener("click", openStaffModal);
 
   function addStaff() {
-    const name = document.getElementById('staffName')?.value.trim();
-    const role = document.getElementById('staffRole')?.value.trim();
-    const salary = parseFloat(document.getElementById('staffSalary')?.value);
-    const photo = document.getElementById('staffPhoto')?.value.trim();
-    const department = document.getElementById('staffDept')?.value.trim();
+    const name = document.getElementById("staffName")?.value.trim();
+    const role = document.getElementById("staffRole")?.value.trim();
+    const salary = parseFloat(document.getElementById("staffSalary")?.value);
+    const photo = document.getElementById("staffPhoto")?.value.trim();
+    const department = document.getElementById("staffDept")?.value.trim();
 
     if (!name || !role || isNaN(salary) || !photo || !department) {
-      alert('Please fill all fields correctly.');
+      alert("Please fill all fields correctly.");
       return;
     }
 
@@ -323,7 +333,7 @@ function exportPayroll() {
       photo,
       department,
       leave: 0,
-      payroll: [{ month: 'Oct', net: salary * 0.88 }]
+      payroll: [{ month: "Oct", net: salary * 0.88 }],
     });
 
     saveStaff();
@@ -343,7 +353,7 @@ function exportPayroll() {
     const pdf = new jsPDF();
 
     pdf.setFontSize(16);
-    pdf.text('SmartDent ERP — Payslip', 15, 20);
+    pdf.text("SmartDent ERP — Payslip", 15, 20);
     pdf.setFontSize(12);
     pdf.text(`Name: ${emp.name}`, 15, 35);
     pdf.text(`Role: ${emp.role}`, 15, 42);
@@ -352,19 +362,18 @@ function exportPayroll() {
     pdf.text(`Net Salary: $${(emp.salary * 0.88).toFixed(2)}`, 15, 63);
     pdf.text(`Leave Balance: ${emp.leave || 0} days`, 15, 70);
     pdf.text(`Date: ${new Date().toLocaleDateString()}`, 15, 77);
-    pdf.text('Authorized Signature: ___________________________', 15, 95);
-    pdf.save(`Payslip-${emp.name.replace(/\s+/g, '-')}.pdf`);
+    pdf.text("Authorized Signature: ___________________________", 15, 95);
+    pdf.save(`Payslip-${emp.name.replace(/\s+/g, "-")}.pdf`);
   }
 
-  document.querySelector('[data-feather="user-plus"]')?.parentElement.addEventListener('click', openStaffModal);
-
+  // ============================
+  // INIT
+  // ============================
   loadStaff();
-renderStaff();
-renderLeaveTracker();
-renderPayrollSummary();
-renderPayrollChart();
-      }
+  renderStaff();
+  renderLeaveTracker();
+  renderPayrollSummary();
+  renderPayrollChart();
 </script>
-
 </body>
 </html>
