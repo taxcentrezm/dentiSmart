@@ -494,19 +494,19 @@ document.addEventListener("DOMContentLoaded", () => {
       pdf.addImage(img, "PNG", 15, 10, logoWidth, logoHeight);
 
       // Company name
-      pdf.setFont("Doksan", "normal");
+      pdf.setFont("doksen", "normal");
       pdf.setFontSize(16);
       pdf.setTextColor(...themeColor);
       pdf.text("SmartDent Clinic", 15 + logoWidth + 5, 26);
 
       // Payslip subtitle
-      pdf.setFont("Poppins", "bold");
+    pdf.setFont("Poppins-Bold", "bold");
       pdf.setFontSize(12);
       pdf.setTextColor(0);
       pdf.text("— Payslip —", 15 + logoWidth + 5, 33);
 
       // Payroll info
-      pdf.setFont("Poppins", "normal");
+      pdf.setFont("Poppins-Regular", "normal");
       pdf.setFontSize(10);
       pdf.text(`Payroll Period: ${payrollPeriod}`, 15, 45);
       pdf.text(`Employee ID: ${employeeId}`, 150, 45);
@@ -518,7 +518,7 @@ document.addEventListener("DOMContentLoaded", () => {
       pdf.text("Dept:", 105, 55);
       pdf.text("Date:", 150, 55);
 
-      pdf.setFont("Poppins", "normal");
+      pdf.setFont("Poppins-Regular", "normal");
       pdf.text(emp.name, 28, 55);
       pdf.text(emp.role, 77, 55);
       pdf.text(emp.department, 118, 55);
@@ -534,7 +534,7 @@ document.addEventListener("DOMContentLoaded", () => {
       pdf.text("DEDUCTIONS", 120, y+5);
 
       y += 8;
-      pdf.setFont("Poppins", "normal");
+      pdf.setFont("Poppins-Regular", "normal");
       const rows = Math.max(Object.keys(earnings).length, Object.keys(deductions).length);
       for(let i=0;i<rows;i++){
         const eLabel = Object.keys(earnings)[i], eVal = Object.values(earnings)[i];
