@@ -273,6 +273,39 @@ let payrollChartInstance = null;
     });
   }
 
+  let leaveChartInstance = null;
+
+function renderLeaveChart() {
+  const ctx = document.getElementById('leaveChart').getContext('2d');
+
+  if (leaveChartInstance) {
+    leaveChartInstance.destroy();
+  }
+
+  const labels = staff.map(emp => emp.name);
+  const data = staff.map(emp => emp.leave || 0);
+
+  leaveChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Leave Days',
+        data,
+        backgroundColor: 'rgba(239,68,68,0.6)',
+        borderColor: 'rgba(239,68,68,1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
+
   // ============================
   // PAYROLL ACTIONS
   // ============================
@@ -359,93 +392,160 @@ let payrollChartInstance = null;
     renderStaff();
   }
 
-  function generatePayslip(index) {
+
+function generatePayslip(index) {
   const { jsPDF } = window.jspdf;
   const emp = staff[index];
-  const pdf = new jsPDF();
+  const pdf = new jsPDF({ unit: "mm", format: "a4" });
 
-  // Sample values (replace with real logic or stored values)
-  const payrollPeriod = 'Oct 01 – Oct 31, 2025';
-  const taxWeek = 'Week 40';
-  const employeeId = 'EMP-' + (index + 1).toString().padStart(4, '0');
+  // ====== CONFIGURATION ======
+  const month = new Date().toLocaleString("en-US", { month: "long" });
+  const year = new Date().getFullYear();
+  const payrollPeriod = `${month} 01 – ${month} 31, ${year}`;
+  const employeeId = "EMP-" + (index + 1).toString().padStart(4, "0");
+  const logoUrl = "logo.jpeg"; // replace with actual logo path
+  const themeColor = [34, 197, 94]; // SmartDent green
 
+  // ====== MOCK PAY DATA ======
   const earnings = {
-    basic: emp.salary,
-    transport: 500,
-    food: 300,
-    housing: 800,
-    bonus: 200
+    Basic: emp.salary,
+    Transport: 500,
+    Food: 300,
+    Housing: 800,
+    Bonus: 200,
   };
 
   const deductions = {
-    paye: emp.salary * 0.15,
-    napsa: emp.salary * 0.05,
-    nimha: emp.salary * 0.01,
-    loan: 250
+    PAYE: emp.salary * 0.15,
+    NAPSA: emp.salary * 0.05,
+    NHIMA: emp.salary * 0.01,
+    Loan: 250,
   };
 
   const totalEarnings = Object.values(earnings).reduce((a, b) => a + b, 0);
   const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0);
   const netPay = totalEarnings - totalDeductions;
 
-  const ytdEarnings = totalEarnings * 10; // example
+  const ytdEarnings = totalEarnings * 10;
   const ytdDeductions = totalDeductions * 10;
 
-  // Header
-  pdf.setFontSize(16);
-  pdf.text('SmartDent ERP — Payslip', 15, 20);
-  pdf.setFontSize(10);
-  pdf.text(`Payroll Period: ${payrollPeriod}`, 15, 28);
-  pdf.text(`Tax Week: ${taxWeek}`, 150, 28);
+  // ====== LOAD LOGO ======
+  const img = new Image();
+  img.crossOrigin = "Anonymous";
+  img.src = logoUrl;
 
-  // Employee Info
-  pdf.setFontSize(12);
-  pdf.text(`Name: ${emp.name}`, 15, 38);
-  pdf.text(`Role: ${emp.role}`, 15, 45);
-  pdf.text(`Department: ${emp.department}`, 15, 52);
-  pdf.text(`Employee ID: ${employeeId}`, 15, 59);
+  img.onload = () => {
+    // ====== HEADER ======
+    pdf.addImage(img, "PNG", 15, 10, 30, 15);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(16);
+    pdf.setTextColor(...themeColor);
+    pdf.text("SmartDent Clinic — Payslip", 50, 20);
 
-  // Earnings Table
-  pdf.setFontSize(12);
-  pdf.text('Earnings', 15, 70);
-  let y = 75;
-  Object.entries(earnings).forEach(([label, value]) => {
-    pdf.text(label.charAt(0).toUpperCase() + label.slice(1), 20, y);
-    pdf.text(`$${value.toFixed(2)}`, 100, y);
-    y += 7;
-  });
+    pdf.setFontSize(10);
+    pdf.setTextColor(0);
+    pdf.text(`Payroll Period: ${payrollPeriod}`, 15, 30);
+    pdf.text(`Employee ID: ${employeeId}`, 150, 30);
 
-  // Deductions Table
-  pdf.text('Deductions', 15, y + 5);
-  y += 10;
-  Object.entries(deductions).forEach(([label, value]) => {
-    pdf.text(label.toUpperCase(), 20, y);
-    pdf.text(`$${value.toFixed(2)}`, 100, y);
-    y += 7;
-  });
+    // ====== EMPLOYEE DETAILS ======
+    pdf.setFontSize(12);
+    pdf.text(`Name: ${emp.name}`, 15, 40);
+    pdf.text(`Role: ${emp.role}`, 15, 47);
+    pdf.text(`Department: ${emp.department}`, 15, 54);
+    pdf.text(`Date Issued: ${new Date().toLocaleDateString()}`, 15, 61);
 
-  // Net Pay
-  pdf.setFontSize(12);
-  pdf.text('Net Pay:', 20, y + 10);
-  pdf.text(`$${netPay.toFixed(2)}`, 100, y + 10);
+    // ====== TABLE HEADERS ======
+    pdf.setFontSize(12);
+    pdf.setFillColor(245, 245, 245);
+    pdf.rect(15, 70, 180, 8, "F");
+    pdf.text("EARNINGS", 25, 75);
+    pdf.text("DEDUCTIONS", 120, 75);
 
-  // YTD Summary
-  pdf.setFontSize(12);
-  pdf.text('Year-to-Date Summary', 15, y + 25);
-  pdf.setFontSize(10);
-  pdf.text(`YTD Earnings: $${ytdEarnings.toFixed(2)}`, 20, y + 32);
-  pdf.text(`YTD Deductions: $${ytdDeductions.toFixed(2)}`, 20, y + 39);
+    // ====== TABLE CONTENT ======
+    let y = 83;
+    pdf.setFontSize(11);
+    pdf.setTextColor(0);
 
-  // Footer
-  pdf.setDrawColor(230, 57, 70);
-  pdf.line(15, 270, 195, 270);
-  pdf.setFontSize(10);
-  pdf.setTextColor(100);
-  pdf.text('SmartDent Clinic • +260 97 000 0000 • info@smartdent.com', 15, 275);
-  pdf.text('Authorized Signature: ___________________________', 15, 265);
+    const rows = Math.max(Object.keys(earnings).length, Object.keys(deductions).length);
+    for (let i = 0; i < rows; i++) {
+      const earnLabel = Object.keys(earnings)[i];
+      const earnValue = Object.values(earnings)[i];
+      const dedLabel = Object.keys(deductions)[i];
+      const dedValue = Object.values(deductions)[i];
 
-  pdf.save(`Payslip-${emp.name.replace(/\s+/g, '-')}.pdf`);
+      if (earnLabel)
+        pdf.text(`${earnLabel}`, 25, y);
+      if (earnValue)
+        pdf.text(`$${earnValue.toFixed(2)}`, 80, y, { align: "right" });
+
+      if (dedLabel)
+        pdf.text(`${dedLabel}`, 120, y);
+      if (dedValue)
+        pdf.text(`$${dedValue.toFixed(2)}`, 185, y, { align: "right" });
+
+      y += 7;
+    }
+
+    // ====== TOTALS ======
+    pdf.setDrawColor(...themeColor);
+    pdf.line(15, y + 3, 195, y + 3);
+
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Total Earnings:", 25, y + 10);
+    pdf.text(`$${totalEarnings.toFixed(2)}`, 80, y + 10, { align: "right" });
+
+    pdf.text("Total Deductions:", 120, y + 10);
+    pdf.text(`$${totalDeductions.toFixed(2)}`, 185, y + 10, { align: "right" });
+
+    // ====== NET PAY ======
+    pdf.setFontSize(14);
+    pdf.setTextColor(...themeColor);
+    pdf.text("Net Pay:", 25, y + 22);
+    pdf.text(`$${netPay.toFixed(2)}`, 80, y + 22, { align: "right" });
+
+    // ====== YEAR-TO-DATE ======
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(11);
+    pdf.setTextColor(0);
+    pdf.text("Year-to-Date Summary", 15, y + 38);
+    pdf.setFontSize(10);
+    pdf.text(`YTD Earnings: $${ytdEarnings.toFixed(2)}`, 20, y + 45);
+    pdf.text(`YTD Deductions: $${ytdDeductions.toFixed(2)}`, 20, y + 52);
+
+    // ====== QR CODE ======
+    const qrCanvas = document.createElement("canvas");
+    new QRious({
+      element: qrCanvas,
+      value: `https://smartdent.com/payslip/${employeeId}`,
+      size: 100,
+    });
+    pdf.addImage(qrCanvas.toDataURL("image/png"), "PNG", 150, 210, 40, 40);
+
+    // ====== SIGNATURE ======
+    pdf.setFontSize(10);
+    pdf.text("Authorized Signature: ___________________________", 15, 265);
+
+    // ====== FOOTER ======
+    pdf.setDrawColor(230, 57, 70);
+    pdf.line(15, 270, 195, 270);
+    pdf.setFontSize(10);
+    pdf.setTextColor(100);
+    pdf.text("SmartDent Clinic • +260 97 000 0000 • info@smartdent.com", 15, 275);
+
+    // ====== WATERMARK ======
+    pdf.setTextColor(240);
+    pdf.setFontSize(40);
+    pdf.text("SMARTDENT", 60, 160, { angle: 45 });
+
+    // ====== SAVE FILE ======
+    pdf.save(`Payslip-${emp.name.replace(/\s+/g, "-")}.pdf`);
+  };
+
+  img.onerror = () => {
+    alert("❌ Failed to load logo image. Please check the file path.");
+  };
 }
+
 
 
   // ============================
