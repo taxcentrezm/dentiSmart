@@ -107,7 +107,7 @@
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="doksen-normal.js"></script>
 <script src="Poppins-Regular-normal.js"></script>
-<script src="Poppins-Bold-bold.js.js"></script>
+<script src="Poppins-Bold-bold.js"></script>
   <!-- Scripts -->
 <script>
   feather.replace();
@@ -442,7 +442,7 @@ function renderLeaveChart() {
     renderStaff();
   }
 
-
+  window.onload = () => {
 async function generatePayslip(index) {
   const { jsPDF } = window.jspdf;
   if (!jsPDF) return alert("jsPDF not loaded.");
@@ -604,7 +604,7 @@ async function generatePayslip(index) {
   img.onerror = () => alert("❌ Failed to load logo image.");
 }
 
-
+  }
 
   // ============================
   // INIT
