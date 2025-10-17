@@ -72,8 +72,6 @@
     <div class="card">
       <h3 class="font-semibold mb-3">Leave Tracker</h3>
       <ul id="leaveTracker" class="space-y-2 text-sm"></ul>
-    </div>
-    <div class="card">
   <canvas id="leaveChart" height="200" ></canvas>
 </div>
   </div>
@@ -401,9 +399,20 @@ async function generatePayslip(index) {
     try {
       const res = await fetch("https://cdn.jsdelivr.net/gh/google/fonts/ofl/poppins/Poppins-Regular.ttf");
       const buffer = await res.arrayBuffer();
-      const fontBase64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
-      jsPDF.API.addFileToVFS("Poppins-Regular.ttf", fontBase64);
-      jsPDF.API.addFont("Poppins-Regular.ttf", "Poppins", "normal");
+      const uint8Array = new Uint8Array(buffer);
+      const fontBase64 = btoa(String.fromCharCode(...uint8Array));
+
+      // Must instantiate jsPDF before calling addFileToVFS
+      const tempPDF = new jsPDF();
+      tempPDF.addFileToVFS("Poppins-Regular.ttf", fontBase64);
+      tempPDF.addFont("Poppins-Regular.ttf", "Poppins", "normal");
+
+      // Register globally (so next PDFs can use it)
+      jsPDF.API.events.push(["addFonts", function () {
+        this.addFileToVFS("Poppins-Regular.ttf", fontBase64);
+        this.addFont("Poppins-Regular.ttf", "Poppins", "normal");
+      }]);
+
       window.customFontLoaded = true;
     } catch (err) {
       console.warn("⚠️ Failed to load custom font, falling back to Helvetica.", err);
@@ -420,10 +429,10 @@ async function generatePayslip(index) {
   const year = new Date().getFullYear();
   const payrollPeriod = `${month} 01 – ${month} 31, ${year}`;
   const employeeId = "EMP-" + (index + 1).toString().padStart(4, "0");
-  const logoUrl = "logo.jpeg"; // Update as needed
+  const logoUrl = "logo.jpeg";
   const themeColor = [34, 197, 94]; // SmartDent green
 
-  // ====== MOCK PAY DATA ======
+  // ====== PAY DATA ======
   const earnings = {
     Basic: emp.salary,
     Transport: 500,
@@ -515,20 +524,18 @@ async function generatePayslip(index) {
     pdf.text("Net Pay:", 25, y + 22);
     pdf.text(`$${netPay.toFixed(2)}`, 80, y + 22, { align: "right" });
 
-    // ====== YEAR-TO-DATE (TABLE) ======
+    // ====== YEAR-TO-DATE TABLE ======
     pdf.setFont("Poppins", "bold");
     pdf.setFontSize(11);
     pdf.setTextColor(0);
     pdf.text("Year-to-Date Summary", 15, y + 35);
 
-    // Header
     pdf.setFillColor(240, 240, 240);
     pdf.rect(15, y + 38, 180, 8, "F");
     pdf.setFontSize(10);
     pdf.text("Description", 20, y + 43);
     pdf.text("Amount (ZMW)", 100, y + 43);
 
-    // Rows
     pdf.setFont("Poppins", "normal");
     pdf.setFillColor(255, 255, 255);
     pdf.rect(15, y + 46, 180, 7, "F");
@@ -562,14 +569,12 @@ async function generatePayslip(index) {
     pdf.setTextColor(100);
     pdf.text("SmartDent Clinic • +260 97 000 0000 • info@smartdent.com", 15, 275);
 
-    // ====== SAVE FILE ======
+    // ====== SAVE ======
     pdf.save(`Payslip-${emp.name.replace(/\s+/g, "-")}.pdf`);
   };
 
   img.onerror = () => alert("❌ Failed to load logo image. Please check the file path.");
 }
-
-
 
 
   // ============================
