@@ -221,7 +221,8 @@ saveStaff();
         <div class="text-right">
           <div class="text-sm">$${emp.salary.toLocaleString()}</div>
           <div class="text-xs text-gray-500">Net $${(emp.salary * 0.88).toFixed(2)}</div>
-         <button onclick="generatePayslip(0)" class="text-xs text-green-600 underline mt-1">Payslip</button> 
+        <button onclick="generatePayslip(${index})"class="text-xs text-green-600 underline mt-1">Payslip</button>  
+
         </div>
       `;
       ul.appendChild(li);
@@ -465,10 +466,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const pdf = new jsPDF({ unit: "mm", format: "a4" });
 
     // ====== FONT SETUP ======
-    // Ensure your font scripts (doksen-normal.js, Poppins-Regular-normal.js, Poppins-Bold-bold.js) are loaded AFTER jsPDF
-    pdf.addFont("Doksan-normal.ttf", "Doksan", "normal");
-    pdf.addFont("Poppins-normal.ttf", "Poppins", "normal");
-    pdf.addFont("Poppins-bold.ttf", "Poppins", "bold");
+ 
 
     // ====== PAY DATA ======
     const earnings = { Basic: emp.salary, Transport: 500, Food: 300, Housing: 800, Bonus: 200 };
