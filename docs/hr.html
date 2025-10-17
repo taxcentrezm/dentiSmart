@@ -104,6 +104,12 @@
     SmartDent ERP • Human Resources & Payroll
   </footer>
   <script src="core.js"></script>
+  <script src="doksen-normal.js"></script>
+<script src="Poppins-Regular-normal.js"></script>
+<script src="Poppins-Bold-bold.js"></script>
+
+
+
   <!-- Scripts -->
 <script>
   feather.replace();
@@ -115,60 +121,52 @@
   // ============================
   function loadStaff() {
     const stored = localStorage.getItem("smartdent_staff");
-    staff = stored
-      ? JSON.parse(stored)
-      : [
-          {
-            name: "Dr. Alice Mwansa",
-            role: "Dentist",
-            salary: 5000,
-            photo: "female (2).jpg",
-            department: "Dental",
-            leave: 2,
-            payroll: Array.from({ length: 12 }, (_, i) => ({
-              month: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][i],
-              net: 4400,
-            })),
-          },
-          {
-            name: "Dr. Brian Zulu",
-            role: "Orthodontist",
-            salary: 6200,
-            photo: "male (2).jpg",
-            department: "Ortho",
-            leave: 1,
-            payroll: Array.from({ length: 12 }, (_, i) => ({
-              month: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][i],
-              net: 5456,
-            })),
-          },
-          {
-            name: "Nurse Chipo",
-            role: "Dental Nurse",
-            salary: 1200,
-            photo: "female (1).jpg",
-            department: "Support",
-            leave: 1,
-            payroll: Array.from({ length: 12 }, (_, i) => ({
-              month: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][i],
-              net: 1056,
-            })),
-          },
-          {
-            name: "Receptionist Tinashe",
-            role: "Admin",
-            salary: 900,
-            photo: "male (1).jpg",
-            department: "Admin",
-            leave: 0,
-            payroll: Array.from({ length: 12 }, (_, i) => ({
-              month: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][i],
-              net: 792,
-            })),
-          },
-        ];
+    
+    function generateFullYearPayroll(salary) {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const net = salary * 0.88;
+  return months.map(month => ({ month, net }));
+}
 
-    saveStaff();
+    staff = stored ? JSON.parse(stored) : [
+  {
+    name: 'Dr. Alice Mwansa',
+    role: 'Dentist',
+    salary: 5000,
+    photo: 'female (2).jpg',
+    department: 'Dental',
+    leave: 2,
+    payroll: generateFullYearPayroll(5000)
+  },
+  {
+    name: 'Dr. Brian Zulu',
+    role: 'Orthodontist',
+    salary: 6200,
+    photo: 'male (2).jpg',
+    department: 'Ortho',
+    leave: 1,
+    payroll: generateFullYearPayroll(6200)
+  },
+  {
+    name: 'Nurse Chipo',
+    role: 'Dental Nurse',
+    salary: 1200,
+    photo: 'female (1).jpg',
+    department: 'Support',
+    leave: 1,
+    payroll: generateFullYearPayroll(1200)
+  },
+  {
+    name: 'Receptionist Tinashe',
+    role: 'Admin',
+    salary: 900,
+    photo: 'male (1).jpg',
+    department: 'Admin',
+    leave: 0,
+    payroll: generateFullYearPayroll(900)
+  }
+];
+saveStaff();
   }
 
   function saveStaff() {
@@ -243,7 +241,7 @@ function renderPayrollChart() {
   }
 
   const allMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const currentMonthIndex = new Date().getMonth(); // 0-based index
+  const currentMonthIndex = new Date().getMonth(); // 0-based
   const months = allMonths.slice(0, currentMonthIndex + 1);
 
   const totals = months.map(month =>
@@ -285,13 +283,14 @@ function renderPayrollChart() {
       plugins: {
         tooltip: {
           callbacks: {
-            label: (context) => `$${context.raw.toLocaleString()}`
+            label: context => `$${context.raw.toLocaleString()}`
           }
         }
       }
     }
   });
 }
+
 
   function renderLeaveTracker() {
     const ul = document.getElementById("leaveTracker");
@@ -447,33 +446,22 @@ function renderLeaveChart() {
 
 
 async function generatePayslip(index) {
-  const { jsPDF } = window.jspdf;
+ const pdf = new jsPDF();
+
+// Add fonts to jsPDF
+pdf.addFileToVFS("Doksan-normal.ttf", DoksanNormal);
+pdf.addFont("Doksan-normal.ttf", "Doksan", "normal");
+
+pdf.addFileToVFS("Poppins-normal.ttf", PoppinsNormal);
+pdf.addFont("Poppins-normal.ttf", "Poppins", "normal");
+
+pdf.addFileToVFS("Poppins-bold.ttf", PoppinsBold);
+pdf.addFont("Poppins-bold.ttf", "Poppins", "bold");
+
   const emp = staff[index];
 
     const pdf = new jsPDF({ unit: "mm", format: "a4" });
 
-  // ====== LOAD FONTS ======
-  // Load Poppins (normal)
-  if (!window.fontsLoaded) {
-    try {
-      const poppinsRes = await fetch("https://cdn.jsdelivr.net/gh/google/fonts/ofl/poppins/Poppins-Regular.ttf");
-      const poppinsBuffer = await poppinsRes.arrayBuffer();
-      const poppinsBase64 = btoa(String.fromCharCode(...new Uint8Array(poppinsBuffer)));
-      pdf.addFileToVFS("Poppins-Regular.ttf", poppinsBase64);
-      pdf.addFont("Poppins-Regular.ttf", "Poppins", "normal");
-
-      // Load Doksan for company name
-      const doksanRes = await fetch("https://cdn.jsdelivr.net/gh/google/fonts/ofl/doksan/Doksan-Regular.ttf");
-      const doksanBuffer = await doksanRes.arrayBuffer();
-      const doksanBase64 = btoa(String.fromCharCode(...new Uint8Array(doksanBuffer)));
-      pdf.addFileToVFS("Doksan-Regular.ttf", doksanBase64);
-      pdf.addFont("Doksan-Regular.ttf", "Doksan", "normal");
-
-      window.fontsLoaded = true;
-    } catch (err) {
-      console.warn("⚠️ Failed to load custom fonts, falling back to Helvetica.", err);
-    }
-  }
 
 
   // ====== INITIALIZE PDF ======
@@ -520,14 +508,15 @@ async function generatePayslip(index) {
  // ====== HEADER ======
 
 // Set company name and payslip text first to measure width
+// Company Name
 pdf.setFont("Doksan", "normal");
 pdf.setFontSize(16);
-pdf.setTextColor(...themeColor);
-const companyName = "SMAITDent Clinic";
-const companyWidth = pdf.getTextWidth(companyName);
+pdf.text("SmartDent Clinic", 50, 20);
 
-pdf.setFont("Poppins", "normal");
+// Payslip title
+pdf.setFont("Poppins", "bold");
 pdf.setFontSize(12);
+pdf.text("— Payslip —", 50, 27);
 const payslipText = "— Payslip —";
 const payslipWidth = pdf.getTextWidth(payslipText);
 
