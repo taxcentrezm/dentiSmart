@@ -75,6 +75,7 @@
       <br/>
       <br/>
   <canvas id="leaveChart" height="200" ></canvas>
+      <div id="leaveKey" class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2 text-gray-700"></div>
 </div>
   </div>
    
@@ -224,6 +225,13 @@ let payrollChartInstance = null;
 
     feather.replace();
   }
+function getEmployeeColors() {
+  const palette = [
+    '#34D399', '#60A5FA', '#FBBF24', '#F87171',
+    '#A78BFA', '#F472B6', '#10B981', '#F59E0B'
+  ];
+  return staff.map((_, i) => palette[i % palette.length]);
+}
 
   function renderPayrollChart() {
   const ctx = document.getElementById('payrollChart').getContext('2d');
@@ -273,10 +281,11 @@ let payrollChartInstance = null;
     });
   }
 
-  let leaveChartInstance = null;
+let leaveChartInstance = null;
 
 function renderLeaveChart() {
   const ctx = document.getElementById('leaveChart').getContext('2d');
+  const colors = getEmployeeColors();
 
   if (leaveChartInstance) {
     leaveChartInstance.destroy();
@@ -292,18 +301,38 @@ function renderLeaveChart() {
       datasets: [{
         label: 'Leave Days',
         data,
-        backgroundColor: 'rgba(239,68,68,0.6)',
-        borderColor: 'rgba(239,68,68,1)',
+        backgroundColor: colors,
+        borderColor: colors,
         borderWidth: 1
       }]
     },
     options: {
       responsive: true,
+      plugins: {
+        legend: { display: false }
+      },
       scales: {
         y: { beginAtZero: true }
       }
     }
   });
+
+  function renderLeaveKey(colors) {
+  const container = document.getElementById('leaveKey');
+  container.innerHTML = '';
+
+  staff.forEach((emp, i) => {
+    const item = document.createElement('div');
+    item.className = 'flex items-center gap-2 text-sm mb-1';
+    item.innerHTML = `
+      <div class="w-4 h-4 rounded" style="background-color:${colors[i]}"></div>
+      <span>${emp.name}</span>
+    `;
+    container.appendChild(item);
+  });
+}
+
+  renderLeaveKey(colors);
 }
 
   // ============================
