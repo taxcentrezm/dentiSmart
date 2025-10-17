@@ -9,6 +9,8 @@
   <style>
     .card { @apply bg-white rounded-2xl shadow p-4; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 antialiased">
 
@@ -39,79 +41,237 @@
   </header>
 
   <!-- Main -->
-  <main class="container mx-auto px-4 py-6 space-y-6">
-    <!-- Staff Directory -->
+ <main class="container mx-auto px-4 py-6 space-y-6">
+  <!-- Staff Directory -->
+  <div class="card">
+    <h2 class="text-xl font-semibold mb-4">Staff Directory</h2>
+    <ul id="staffList" class="divide-y"></ul>
+  </div>
+
+  <!-- Payroll & Leave -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Payroll Summary -->
     <div class="card">
-      <h2 class="text-xl font-semibold mb-4">Staff Directory</h2>
-      <ul id="staffList" class="divide-y"></ul>
+      <h3 class="font-semibold mb-3">Payroll Summary</h3>
+      <ul id="payrollSummary" class="space-y-2 text-sm"></ul>
+      <div class="mt-4 flex gap-2">
+        <button onclick="runPayroll()" class="flex-1 px-4 py-2 rounded-md bg-green-600 text-white">Run Payroll</button>
+        <button onclick="exportPayroll()" class="px-4 py-2 rounded-md border">Export</button>
+      </div>
+      <div class="card">
+  <h3 class="font-semibold mb-3">Payroll History Chart</h3>
+  <canvas id="payrollChart" height="200"></canvas>
+</div>
     </div>
 
-    <!-- Payroll & Leave -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="card">
-        <h3 class="font-semibold mb-3">Payroll Summary</h3>
-        <ul class="space-y-2 text-sm">
-          <li class="flex justify-between"><span>Total Staff</span><span>4</span></li>
-          <li class="flex justify-between"><span>Total Payroll</span><span>$12,300</span></li>
-          <li class="flex justify-between text-green-600"><span>Last Run</span><span>Oct 01</span></li>
-        </ul>
-        <div class="mt-4 flex gap-2">
-          <button class="flex-1 px-4 py-2 rounded-md bg-green-600 text-white">Run Payroll</button>
-          <button class="px-4 py-2 rounded-md border">Export</button>
-        </div>
-      </div>
+    <!-- Leave Tracker -->
+    <div class="card">
+      <h3 class="font-semibold mb-3">Leave Tracker</h3>
+      <ul id="leaveTracker" class="space-y-2 text-sm"></ul>
+    </div>
+  </div>
 
-      <div class="card">
-        <h3 class="font-semibold mb-3">Leave Tracker</h3>
-        <ul class="space-y-2 text-sm">
-          <li class="flex justify-between"><span>Dr. Alice Mwansa</span><span>2 days</span></li>
-          <li class="flex justify-between"><span>Nurse Chipo</span><span>1 day</span></li>
-          <li class="flex justify-between"><span>Receptionist Tinashe</span><span>0 days</span></li>
-        </ul>
+  <!-- Add Staff Modal -->
+  <div id="staffModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+      <h3 class="text-lg font-semibold mb-4">Add New Staff</h3>
+      <div class="space-y-3">
+        <input id="staffName" type="text" placeholder="Full Name" class="w-full px-3 py-2 border rounded-md" />
+        <input id="staffRole" type="text" placeholder="Role" class="w-full px-3 py-2 border rounded-md" />
+        <input id="staffSalary" type="number" placeholder="Salary" class="w-full px-3 py-2 border rounded-md" />
+        <input id="staffPhoto" type="text" placeholder="Photo URL" class="w-full px-3 py-2 border rounded-md" />
+        <input id="staffDept" type="text" placeholder="Department" class="w-full px-3 py-2 border rounded-md" />
+      </div>
+      <div class="mt-4 flex justify-end gap-2">
+        <button onclick="closeStaffModal()" class="px-4 py-2 border rounded-md">Cancel</button>
+        <button onclick="addStaff()" class="px-4 py-2 bg-green-600 text-white rounded-md">Add</button>
       </div>
     </div>
-  </main>
+  </div>
+</main>
 
   <footer class="mt-8 text-sm text-gray-500 text-center">
     SmartDent ERP • Human Resources & Payroll
   </footer>
   <script src="core.js"></script>
   <!-- Scripts -->
-  <script>
-    feather.replace();
+<script>
+  feather.replace();
 
-    const staff = [
-      { name: 'Dr. Alice Mwansa', role: 'Dentist', salary: 5000 },
-      { name: 'Dr. Brian Zulu', role: 'Orthodontist', salary: 6200 },
-      { name: 'Nurse Chipo', role: 'Dental Nurse', salary: 1200 },
-      { name: 'Receptionist Tinashe', role: 'Admin', salary: 900 }
+  let staff = [];
+
+  // Load staff from localStorage or initialize default
+  function loadStaff() {
+    const stored = localStorage.getItem('smartdent_staff');
+    staff = stored ? JSON.parse(stored) : [
+      {
+        name: 'Dr. Alice Mwansa',
+        role: 'Dentist',
+        salary: 5000,
+        photo: 'female (2).jpg',
+        department: 'Dental',
+        leave: 2,
+        payroll: [{ month: 'Oct', net: 4400 }]
+      },
+      {
+        name: 'Dr. Brian Zulu',
+        role: 'Orthodontist',
+        salary: 6200,
+        photo: 'male (2).jpg',
+        department: 'Ortho',
+        leave: 1,
+        payroll: [{ month: 'Oct', net: 5456 }]
+      },
+      {
+        name: 'Nurse Chipo',
+        role: 'Dental Nurse',
+        salary: 1200,
+        photo: 'female (1).jpg',
+        department: 'Support',
+        leave: 1,
+        payroll: [{ month: 'Oct', net: 1056 }]
+      },
+      {
+        name: 'Receptionist Tinashe',
+        role: 'Admin',
+        salary: 900,
+        photo: 'male (1).jpg',
+        department: 'Admin',
+        leave: 0,
+        payroll: [{ month: 'Oct', net: 792 }]
+      }
     ];
+    saveStaff();
+  }
 
-    function renderStaff(){
-      const ul = document.getElementById('staffList');
-      ul.innerHTML = '';
-      staff.forEach(emp => {
-        const li = document.createElement('li');
-        li.className = 'py-3 flex items-center justify-between';
-        li.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="p-2 rounded-md bg-green-50"><i data-feather="user" class="text-green-600"></i></div>
-            <div>
-              <div class="font-medium">${emp.name}</div>
-              <div class="text-xs text-gray-500">${emp.role}</div>
-            </div>
+  function saveStaff() {
+    localStorage.setItem('smartdent_staff', JSON.stringify(staff));
+  }
+
+  function renderStaff() {
+    const ul = document.getElementById('staffList');
+    ul.innerHTML = '';
+    staff.forEach((emp, index) => {
+      const li = document.createElement('li');
+      li.className = 'py-3 flex items-center justify-between';
+      li.innerHTML = `
+        <div class="flex items-center gap-3">
+          <img src="${emp.photo}" class="w-10 h-10 rounded-full object-cover border" />
+          <div>
+            <div class="font-medium">${emp.name}</div>
+            <div class="text-xs text-gray-500">${emp.role} • ${emp.department}</div>
+            <div class="text-xs text-gray-500">Leave: ${emp.leave || 0} days</div>
+            <button onclick="approveLeave(${index})" class="text-xs text-green-600 underline mt-1">Approve 1 Day Leave</button>
           </div>
-          <div class="text-right">
-            <div class="text-sm">$${emp.salary.toLocaleString()}</div>
-            <div class="text-xs text-gray-500">Net $${(emp.salary * 0.88).toFixed(2)}</div>
-          </div>
-        `;
-        ul.appendChild(li);
-      });
-      feather.replace();
+        </div>
+        <div class="text-right">
+          <div class="text-sm">$${emp.salary.toLocaleString()}</div>
+          <div class="text-xs text-gray-500">Net $${(emp.salary * 0.88).toFixed(2)}</div>
+          <button onclick="generatePayslip(${index})" class="text-xs text-green-600 underline mt-1">Payslip</button>
+        </div>
+      `;
+      ul.appendChild(li);
+    });
+    feather.replace();
+  }
+function renderPayrollChart() {
+  const ctx = document.getElementById('payrollChart').getContext('2d');
+
+  // Aggregate monthly totals
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const totals = months.map(month => {
+    return staff.reduce((sum, emp) => {
+      const entry = emp.payroll?.find(p => p.month === month);
+      return sum + (entry?.net || 0);
+    }, 0);
+  });
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'Total Net Payroll',
+        data: totals,
+        backgroundColor: 'rgba(34,197,94,0.6)',
+        borderColor: 'rgba(34,197,94,1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
+
+  function openStaffModal() {
+    document.getElementById('staffModal').style.display = 'flex';
+  }
+
+  function closeStaffModal() {
+    document.getElementById('staffModal').style.display = 'none';
+  }
+
+  function addStaff() {
+    const name = document.getElementById('staffName')?.value.trim();
+    const role = document.getElementById('staffRole')?.value.trim();
+    const salary = parseFloat(document.getElementById('staffSalary')?.value);
+    const photo = document.getElementById('staffPhoto')?.value.trim();
+    const department = document.getElementById('staffDept')?.value.trim();
+
+    if (!name || !role || isNaN(salary) || !photo || !department) {
+      alert('Please fill all fields correctly.');
+      return;
     }
 
+    staff.push({
+      name,
+      role,
+      salary,
+      photo,
+      department,
+      leave: 0,
+      payroll: [{ month: 'Oct', net: salary * 0.88 }]
+    });
+
+    saveStaff();
+    closeStaffModal();
     renderStaff();
-  </script>
+  }
+
+  function approveLeave(index) {
+    staff[index].leave += 1;
+    saveStaff();
+    renderStaff();
+  }
+
+  function generatePayslip(index) {
+    const { jsPDF } = window.jspdf;
+    const emp = staff[index];
+    const pdf = new jsPDF();
+
+    pdf.setFontSize(16);
+    pdf.text('SmartDent ERP — Payslip', 15, 20);
+    pdf.setFontSize(12);
+    pdf.text(`Name: ${emp.name}`, 15, 35);
+    pdf.text(`Role: ${emp.role}`, 15, 42);
+    pdf.text(`Department: ${emp.department}`, 15, 49);
+    pdf.text(`Gross Salary: $${emp.salary}`, 15, 56);
+    pdf.text(`Net Salary: $${(emp.salary * 0.88).toFixed(2)}`, 15, 63);
+    pdf.text(`Leave Balance: ${emp.leave || 0} days`, 15, 70);
+    pdf.text(`Date: ${new Date().toLocaleDateString()}`, 15, 77);
+    pdf.text('Authorized Signature: ___________________________', 15, 95);
+    pdf.save(`Payslip-${emp.name.replace(/\s+/g, '-')}.pdf`);
+  }
+
+  document.querySelector('[data-feather="user-plus"]')?.parentElement.addEventListener('click', openStaffModal);
+
+  loadStaff();
+  renderStaff();
+  renderPayrollChart();
+</script>
+
 </body>
 </html>
