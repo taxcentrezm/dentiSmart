@@ -8,5 +8,4 @@ this.addFont("doksen-normal.ttf", "doksen", "normal");
 };
 jsPDFAPI.events.push(['addFonts', callAddFont])
  })(jsPDF.API);
-
 });
