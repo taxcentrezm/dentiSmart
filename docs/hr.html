@@ -11,6 +11,7 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
 
 
 </head>
@@ -65,7 +66,10 @@
   <canvas id="payrollChart" height="200"></canvas>
 </div>
     </div>
-    
+    <div class="card">
+  <h3 class="font-semibold mb-3">Leave Tracker</h3>
+  <canvas id="leaveChart" height="200" ></canvas>
+</div>
 
     <!-- Leave Tracker -->
     <div class="card">
@@ -73,11 +77,7 @@
       <ul id="leaveTracker" class="space-y-2 text-sm"></ul>
     </div>
   </div>
-   <div class="card">
-  <h3 class="font-semibold mb-3">Leave Tracker</h3>
-  <ul id="leaveTracker" class="space-y-2 text-sm"></ul>
-  <canvas id="leaveChart" height="200" class="mt-6"></canvas>
-</div>
+   
 
 
   <!-- Add Staff Modal -->
