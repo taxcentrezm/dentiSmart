@@ -7,65 +7,53 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/feather-icons"></script>
   <style>
-    body { font-family: 'Inter', sans-serif; background: #f9fafb; }
     .card { @apply bg-white rounded-2xl shadow p-4; }
-
-    /* Glass Modal */
+    .glass {
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
     .modal {
-      position: fixed; inset: 0; display: none;
-      align-items: center; justify-content: center;
-      background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(6px);
-      animation: fadeIn 0.25s ease forwards;
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+      animation: fadeIn 0.25s ease;
     }
-    .modal.show { display: flex; }
-    .modal-content {
-      @apply bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-6 w-full max-w-md transform transition-all;
-      animation: scaleIn 0.25s ease;
-    }
-    @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
-    @keyframes scaleIn { from {opacity: 0; transform: scale(0.95);} to {opacity: 1; transform: scale(1);} }
-
-    .status-pill { @apply px-2 py-0.5 text-xs font-semibold rounded-full; }
-
-    /* Dropdown */
-    .dropdown-menu {
-      position: absolute;
-      right: 0;
-      top: 110%;
-      @apply bg-white/90 backdrop-blur-md rounded-xl shadow-md w-40 hidden transition-all;
-      animation: fadeIn 0.2s ease;
-    }
-    .dropdown-menu.show { display: block; }
-    .dropdown-item {
-      @apply px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer flex items-center gap-2;
-    }
+    .modal.active { display: flex; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
   </style>
 </head>
-<body class="text-gray-800">
+<body class="bg-gray-50 font-sans text-gray-800 antialiased">
 
   <!-- Header -->
   <header class="bg-indigo-600 text-white py-4 shadow">
     <div class="container mx-auto px-4 flex justify-between items-center">
-      <h1 class="text-lg font-semibold flex items-center gap-2">
-        <i data-feather="users"></i> SmartDent ERP
-      </h1>
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v6"></path><path d="M8 10s1 2 4 2 4-2 4-2"></path><path d="M6 21s2-4 6-4 6 4 6 4"></path>
+          </svg>
+        </div>
+        <div class="font-semibold text-lg">SmartDent ERP</div>
+      </div>
 
       <div class="flex items-center gap-3">
-        <button id="addPatientBtn" class="bg-white/90 text-indigo-600 px-3 py-2 rounded-md flex items-center gap-2 shadow hover:bg-white">
+        <button id="addBtn" class="bg-white/90 text-indigo-600 px-3 py-2 rounded-md inline-flex items-center gap-2 shadow-sm hover:bg-white">
           <i data-feather="plus-circle"></i> Add Patient
         </button>
-
-        <!-- Doctor dropdown -->
-        <div class="relative">
+        <div class="relative" id="doctorMenu">
           <button id="doctorBtn" class="flex items-center gap-2 bg-white/90 px-3 py-2 rounded-full shadow-sm hover:bg-white">
-            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=100&auto=format&fit=crop"
-                 class="w-8 h-8 rounded-full object-cover">
-            <span class="hidden md:inline-block text-sm text-indigo-700 font-medium">Dr. Phiri</span>
-            <i data-feather="chevron-down" class="text-indigo-700"></i>
+            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=100&auto=format&fit=crop" class="w-8 h-8 rounded-full object-cover">
+            <span class="hidden md:inline-block text-sm">Dr. Phiri</span>
+            <i data-feather="chevron-down"></i>
           </button>
-          <div id="doctorMenu" class="dropdown-menu">
-            <div class="dropdown-item"><i data-feather="user"></i> Profile</div>
-            <div class="dropdown-item"><i data-feather="settings"></i> Settings</div>
+          <div id="doctorDropdown" class="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-md p-2 hidden">
+            <button class="block w-full text-left px-3 py-2 rounded hover:bg-gray-100" id="profileBtn">Profile</button>
+            <button class="block w-full text-left px-3 py-2 rounded hover:bg-gray-100" id="settingsBtn">Settings</button>
+            <button class="block w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-rose-600" id="logoutBtn">Logout</button>
           </div>
         </div>
       </div>
@@ -73,80 +61,67 @@
   </header>
 
   <!-- Main -->
-  <main class="container mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-    
-    <!-- Patient List -->
-    <section class="lg:col-span-2 card">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Patient Records</h2>
-        <div class="flex gap-2">
-          <input id="searchInput" type="text" placeholder="Search…" class="px-3 py-2 border rounded-md text-sm" />
-          <button id="searchBtn" class="px-3 py-2 border rounded-md"><i data-feather="search"></i></button>
+  <main class="container mx-auto px-4 py-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Patient List -->
+      <section class="lg:col-span-2 space-y-6">
+        <div class="card">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">Patient Records</h2>
+            <div class="flex gap-2">
+              <input id="searchInput" type="text" placeholder="Search…" class="px-3 py-2 border rounded-md" />
+              <button id="searchBtn" class="px-3 py-2 border rounded-md"><i data-feather="search"></i></button>
+            </div>
+          </div>
+          <ul id="patientList" class="space-y-4"></ul>
         </div>
-      </div>
-      <ul id="patientList" class="divide-y divide-gray-100"></ul>
-    </section>
+      </section>
 
-    <!-- Sidebar -->
-    <aside class="space-y-6">
-      <div class="card">
-        <h3 class="font-semibold mb-3">Appointments Summary</h3>
-        <ul class="space-y-2 text-sm">
-          <li class="flex justify-between"><span>Today</span><span>38</span></li>
-          <li class="flex justify-between"><span>Pending</span><span>5</span></li>
-          <li class="flex justify-between"><span>Upcoming</span><span>12</span></li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <h3 class="font-semibold mb-3">Quick Actions</h3>
-        <div class="grid gap-3">
-          <button class="flex items-center gap-3 px-4 py-2 rounded-lg bg-indigo-50 hover:bg-indigo-100">
-            <i data-feather="calendar"></i> Schedule
-          </button>
-          <button class="flex items-center gap-3 px-4 py-2 rounded-lg bg-green-50 hover:bg-green-100">
-            <i data-feather="users"></i> Manage Patients
-          </button>
-          <button class="flex items-center gap-3 px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100">
-            <i data-feather="file-text"></i> Invoicing
-          </button>
+      <!-- Sidebar -->
+      <aside class="space-y-6">
+        <div class="card">
+          <h3 class="font-semibold mb-3">Appointments Summary</h3>
+          <ul class="space-y-2 text-sm">
+            <li class="flex justify-between"><span>Today</span><span>38</span></li>
+            <li class="flex justify-between"><span>Pending</span><span>5</span></li>
+            <li class="flex justify-between"><span>Upcoming</span><span>12</span></li>
+          </ul>
         </div>
-      </div>
-    </aside>
+
+        <div class="card">
+          <h3 class="font-semibold mb-3">Quick Actions</h3>
+          <div class="grid gap-3">
+            <button id="scheduleBtn" class="flex items-center gap-3 px-4 py-2 rounded-lg bg-indigo-50 hover:bg-indigo-100"><i data-feather="calendar"></i> Schedule</button>
+            <button id="manageBtn" class="flex items-center gap-3 px-4 py-2 rounded-lg bg-green-50 hover:bg-green-100"><i data-feather="users"></i> Manage Patients</button>
+            <button id="invoiceBtn" class="flex items-center gap-3 px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100"><i data-feather="file-text"></i> Invoicing</button>
+          </div>
+        </div>
+      </aside>
+    </div>
   </main>
 
   <footer class="mt-8 text-sm text-gray-500 text-center">
     SmartDent ERP • Patient Management Simplified
   </footer>
 
-  <!-- Modal -->
+  <!-- Patient Modal -->
   <div id="patientModal" class="modal">
-    <div class="modal-content">
+    <div class="glass rounded-2xl p-6 w-full max-w-md relative">
       <h2 id="modalTitle" class="text-lg font-semibold mb-4">Add Patient</h2>
-      <form id="patientForm" class="space-y-4">
-        <input type="hidden" id="editIndex" value="">
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Patient Name</label>
-          <input type="text" id="patientName" required class="w-full px-3 py-2 border rounded-md mt-1">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Visit Note</label>
-          <input type="text" id="patientNote" placeholder="e.g. Cleaning" class="w-full px-3 py-2 border rounded-md mt-1">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Status</label>
-          <select id="patientStatus" class="w-full px-3 py-2 border rounded-md mt-1">
-            <option>Pending</option>
-            <option>Paid</option>
-            <option>Overdue</option>
-          </select>
-        </div>
-        <div class="flex justify-between pt-4">
-          <button type="button" id="deleteBtn" class="px-4 py-2 bg-rose-50 text-rose-600 rounded-md hover:bg-rose-100 hidden">Delete</button>
-          <div class="flex gap-2 ml-auto">
-            <button type="button" id="cancelBtn" class="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200">Cancel</button>
-            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Save</button>
-          </div>
+      <form id="patientForm" class="space-y-3">
+        <input type="hidden" id="editIndex" />
+        <input id="name" required placeholder="Full Name" class="w-full border rounded-md px-3 py-2" />
+        <input id="note" required placeholder="Treatment / Note" class="w-full border rounded-md px-3 py-2" />
+        <input id="date" type="date" class="w-full border rounded-md px-3 py-2" />
+        <select id="status" class="w-full border rounded-md px-3 py-2">
+          <option value="Paid">Paid</option>
+          <option value="Invoice">Invoice</option>
+          <option value="Overdue">Overdue</option>
+        </select>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" id="deleteBtn" class="hidden px-3 py-2 bg-rose-50 text-rose-600 rounded-md hover:bg-rose-100">Delete</button>
+          <button type="button" id="cancelBtn" class="px-3 py-2 border rounded-md">Cancel</button>
+          <button type="submit" class="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Save</button>
         </div>
       </form>
     </div>
@@ -155,134 +130,123 @@
   <script>
     feather.replace();
 
-    const ADMIN_PASSWORD = "admin123";
-    let patients = JSON.parse(localStorage.getItem("patients")) || [];
+    const modal = document.getElementById('patientModal');
+    const form = document.getElementById('patientForm');
+    const patientList = document.getElementById('patientList');
+    const dateInput = document.getElementById('date');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const editIndex = document.getElementById('editIndex');
+    const modalTitle = document.getElementById('modalTitle');
 
-    const modal = document.getElementById("patientModal");
-    const form = document.getElementById("patientForm");
-    const modalTitle = document.getElementById("modalTitle");
-    const deleteBtn = document.getElementById("deleteBtn");
-    const cancelBtn = document.getElementById("cancelBtn");
-    const addBtn = document.getElementById("addPatientBtn");
+    // Patients from localStorage
+    let patients = JSON.parse(localStorage.getItem('patients')) || [];
 
-    // =======================
-    // Modal Logic
-    // =======================
-    function openModal(isEdit = false, index = null) {
-      modal.classList.add("show");
-      deleteBtn.classList.toggle("hidden", !isEdit);
-      modalTitle.textContent = isEdit ? "Edit Patient" : "Add Patient";
-
-      if (isEdit) {
-        const p = patients[index];
-        document.getElementById("patientName").value = p.name;
-        document.getElementById("patientNote").value = p.note;
-        document.getElementById("patientStatus").value = p.status;
-        document.getElementById("editIndex").value = index;
-      } else {
-        form.reset();
-        document.getElementById("editIndex").value = "";
-      }
+    function saveData() {
+      localStorage.setItem('patients', JSON.stringify(patients));
     }
 
-    function closeModal() {
-      modal.classList.remove("show");
-      form.reset();
-    }
-
-    modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });
-    cancelBtn.addEventListener("click", closeModal);
-    addBtn.addEventListener("click", () => openModal(false));
-
-    // =======================
-    // Render Logic
-    // =======================
-    function render(list = patients) {
-      const ul = document.getElementById("patientList");
-      ul.innerHTML = "";
-
-      if (list.length === 0) {
-        ul.innerHTML = `<li class="py-3 text-center text-gray-500 text-sm">No patient records found.</li>`;
-        return;
-      }
-
+    function render(list) {
+      patientList.innerHTML = '';
       list.forEach((p, i) => {
-        const color = p.status === "Paid"
-          ? "bg-green-100 text-green-700"
-          : p.status === "Overdue"
-          ? "bg-rose-100 text-rose-700"
-          : "bg-amber-100 text-amber-700";
-
-        const li = document.createElement("li");
-        li.className = "flex items-center justify-between p-3 hover:bg-gray-50 cursor-pointer transition";
+        const initials = p.name.split(' ').map(s => s[0]).slice(0, 2).join('');
+        const color =
+          p.status === 'Paid' ? 'text-green-600' :
+          p.status === 'Overdue' ? 'text-rose-600' :
+          'text-amber-600';
+        const li = document.createElement('li');
+        li.className = 'flex items-center justify-between hover:bg-gray-50 p-2 rounded-lg cursor-pointer transition';
         li.innerHTML = `
-          <div>
-            <div class="font-medium">${p.name}</div>
-            <div class="text-xs text-gray-500">${p.note} — ${p.date}</div>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center font-semibold">${initials}</div>
+            <div>
+              <div class="font-medium">${p.name}</div>
+              <div class="text-xs text-gray-500">${p.note} — ${p.date}</div>
+            </div>
           </div>
-          <span class="status-pill ${color}">${p.status}</span>
+          <div class="text-sm ${color}">${p.status}</div>
         `;
-        li.addEventListener("click", () => openModal(true, i));
-        ul.appendChild(li);
+        li.onclick = () => openModal(i);
+        patientList.appendChild(li);
       });
     }
 
-    // =======================
-    // Save / Delete
-    // =======================
-    function savePatients() { localStorage.setItem("patients", JSON.stringify(patients)); }
+    function openModal(index = null) {
+      modal.classList.add('active');
+      if (index !== null) {
+        const p = patients[index];
+        modalTitle.textContent = 'Edit Patient';
+        form.name.value = p.name;
+        form.note.value = p.note;
+        form.date.value = p.date;
+        form.status.value = p.status;
+        editIndex.value = index;
+        deleteBtn.classList.remove('hidden');
+      } else {
+        modalTitle.textContent = 'Add Patient';
+        form.reset();
+        form.date.value = new Date().toISOString().split('T')[0];
+        editIndex.value = '';
+        deleteBtn.classList.add('hidden');
+      }
+    }
 
-    form.addEventListener("submit", e => {
+    function closeModal() { modal.classList.remove('active'); }
+
+    form.onsubmit = e => {
       e.preventDefault();
-      const name = document.getElementById("patientName").value.trim();
-      const note = document.getElementById("patientNote").value.trim() || "Checkup";
-      const status = document.getElementById("patientStatus").value;
-      const index = document.getElementById("editIndex").value;
-      const date = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit" });
-
-      if (index) patients[index] = { ...patients[index], name, note, status };
-      else patients.push({ name, note, date, status });
-
-      savePatients();
-      render();
+      const data = {
+        name: form.name.value,
+        note: form.note.value,
+        date: form.date.value,
+        status: form.status.value
+      };
+      if (editIndex.value) patients[editIndex.value] = data;
+      else patients.push(data);
+      saveData();
+      render(patients);
       closeModal();
-    });
+    };
 
-    deleteBtn.addEventListener("click", () => {
-      const index = document.getElementById("editIndex").value;
-      const pass = prompt("Enter admin password to confirm deletion:");
-      if (pass === ADMIN_PASSWORD) {
-        patients.splice(index, 1);
-        savePatients();
-        render();
+    deleteBtn.onclick = () => {
+      const pwd = prompt("Enter password to delete:");
+      if (pwd === "admin123") {
+        patients.splice(editIndex.value, 1);
+        saveData();
+        render(patients);
         closeModal();
-        alert("Patient deleted successfully.");
-      } else if (pass !== null) {
-        alert("Incorrect password.");
-      }
-    });
+      } else alert("Incorrect password!");
+    };
 
-    // =======================
+    document.getElementById('cancelBtn').onclick = closeModal;
+    document.getElementById('addBtn').onclick = () => openModal();
+    window.onclick = e => { if (e.target === modal) closeModal(); };
+
     // Search
-    // =======================
-    document.getElementById("searchBtn").addEventListener("click", () => {
-      const q = document.getElementById("searchInput").value.toLowerCase().trim();
+    document.getElementById('searchBtn').onclick = () => {
+      const q = document.getElementById('searchInput').value.toLowerCase();
       render(patients.filter(p => p.name.toLowerCase().includes(q) || p.note.toLowerCase().includes(q)));
+    };
+
+    // Doctor dropdown
+    const doctorBtn = document.getElementById('doctorBtn');
+    const doctorDropdown = document.getElementById('doctorDropdown');
+    doctorBtn.onclick = () => doctorDropdown.classList.toggle('hidden');
+    window.addEventListener('click', e => {
+      if (!doctorBtn.contains(e.target) && !doctorDropdown.contains(e.target)) doctorDropdown.classList.add('hidden');
     });
 
-    // =======================
-    // Doctor Dropdown
-    // =======================
-    const doctorBtn = document.getElementById("doctorBtn");
-    const doctorMenu = document.getElementById("doctorMenu");
-    doctorBtn.addEventListener("click", () => doctorMenu.classList.toggle("show"));
-    document.addEventListener("click", e => {
-      if (!doctorBtn.contains(e.target) && !doctorMenu.contains(e.target)) {
-        doctorMenu.classList.remove("show");
-      }
-    });
+    document.getElementById('profileBtn').onclick = () => alert("Doctor Profile Page (coming soon)");
+    document.getElementById('settingsBtn').onclick = () => alert("Settings Page (coming soon)");
+    document.getElementById('logoutBtn').onclick = () => {
+      if (confirm("Log out of SmartDent ERP?")) alert("Logged out successfully!");
+    };
 
-    render();
+    // Quick Actions
+    document.getElementById('scheduleBtn').onclick = () => alert("Schedule module loading…");
+    document.getElementById('manageBtn').onclick = () => alert("Opening patient management…");
+    document.getElementById('invoiceBtn').onclick = () => alert("Redirecting to invoicing…");
+
+    render(patients);
   </script>
 </body>
 </html>
