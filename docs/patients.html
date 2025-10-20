@@ -944,155 +944,153 @@ video {
   </div>
 </div>
 
-  <script>
-    feather.replace();
+<script>
+feather.replace();
 
-    const modal = document.getElementById('patientModal');
-    const form = document.getElementById('patientForm');
-    const patientList = document.getElementById('patientList');
-    const dateInput = document.getElementById('date');
-    const deleteBtn = document.getElementById('deleteBtn');
-    const editIndex = document.getElementById('editIndex');
-    const modalTitle = document.getElementById('modalTitle');
+// ===== PATIENT MANAGEMENT =====
+const modal = document.getElementById('patientModal');
+const form = document.getElementById('patientForm');
+const patientList = document.getElementById('patientList');
+const dateInput = document.getElementById('date');
+const deleteBtn = document.getElementById('deleteBtn');
+const editIndex = document.getElementById('editIndex');
+const modalTitle = document.getElementById('modalTitle');
 
-    // Patients from localStorage
-    let patients = JSON.parse(localStorage.getItem('patients')) || [];
+let patients = JSON.parse(localStorage.getItem('patients')) || [];
 
-    function saveData() {
-      localStorage.setItem('patients', JSON.stringify(patients));
-    }
+function savePatients() {
+  localStorage.setItem('patients', JSON.stringify(patients));
+}
 
-    function render(list) {
-      patientList.innerHTML = '';
-      list.forEach((p, i) => {
-        const initials = p.name.split(' ').map(s => s[0]).slice(0, 2).join('');
-        const color =
-          p.status === 'Paid' ? 'text-green-600' :
-          p.status === 'Overdue' ? 'text-rose-600' :
-          'text-amber-600';
-        const li = document.createElement('li');
-        li.className = 'flex items-center justify-between hover:bg-gray-50 p-2 rounded-lg cursor-pointer transition';
-        li.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center font-semibold">${initials}</div>
-            <div>
-              <div class="font-medium">${p.name}</div>
-              <div class="text-xs text-gray-500">${p.note} — ${p.date}</div>
-            </div>
-          </div>
-          <div class="text-sm ${color}">${p.status}</div>
-        `;
-        li.onclick = () => openModal(i);
-        patientList.appendChild(li);
-      });
-    }
+function renderPatients(list = patients) {
+  patientList.innerHTML = '';
+  list.forEach((p, i) => {
+    const initials = p.name.split(' ').map(s => s[0]).slice(0,2).join('');
+    const color =
+      p.status === 'Paid' ? 'text-green-600' :
+      p.status === 'Overdue' ? 'text-rose-600' :
+      'text-amber-600';
+    const li = document.createElement('li');
+    li.className = 'flex items-center justify-between hover:bg-gray-50 p-2 rounded-lg cursor-pointer transition';
+    li.innerHTML = `
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center font-semibold">${initials}</div>
+        <div>
+          <div class="font-medium">${p.name}</div>
+          <div class="text-xs text-gray-500">${p.note} — ${p.date}</div>
+        </div>
+      </div>
+      <div class="text-sm ${color}">${p.status}</div>
+    `;
+    li.onclick = () => openPatientModal(i);
+    patientList.appendChild(li);
+  });
+}
 
-    function openModal(index = null) {
-      modal.classList.add('active');
-      if (index !== null) {
-        const p = patients[index];
-        modalTitle.textContent = 'Edit Patient';
-        form.name.value = p.name;
-        form.note.value = p.note;
-        form.date.value = p.date;
-        form.status.value = p.status;
-        editIndex.value = index;
-        deleteBtn.classList.remove('hidden');
-      } else {
-        modalTitle.textContent = 'Add Patient';
-        form.reset();
-        form.date.value = new Date().toISOString().split('T')[0];
-        editIndex.value = '';
-        deleteBtn.classList.add('hidden');
-      }
-    }
+function openPatientModal(index = null) {
+  modal.classList.add('active');
+  if (index !== null) {
+    const p = patients[index];
+    modalTitle.textContent = 'Edit Patient';
+    form.name.value = p.name;
+    form.note.value = p.note;
+    form.date.value = p.date;
+    form.status.value = p.status;
+    editIndex.value = index;
+    deleteBtn.classList.remove('hidden');
+  } else {
+    modalTitle.textContent = 'Add Patient';
+    form.reset();
+    form.date.value = new Date().toISOString().split('T')[0];
+    editIndex.value = '';
+    deleteBtn.classList.add('hidden');
+  }
+}
 
-    function closeModal() { modal.classList.remove('active'); }
+function closePatientModal() {
+  modal.classList.remove('active');
+}
 
-    form.onsubmit = e => {
-      e.preventDefault();
-      const data = {
-        name: form.name.value,
-        note: form.note.value,
-        date: form.date.value,
-        status: form.status.value
-      };
-      if (editIndex.value) patients[editIndex.value] = data;
-      else patients.push(data);
-      saveData();
-      render(patients);
-      closeModal();
-    };
+form.onsubmit = e => {
+  e.preventDefault();
+  const data = {
+    name: form.name.value.trim(),
+    note: form.note.value.trim(),
+    date: form.date.value,
+    status: form.status.value
+  };
+  if (editIndex.value !== '') patients[editIndex.value] = data;
+  else patients.push(data);
+  savePatients();
+  renderPatients();
+  closePatientModal();
+};
 
-    deleteBtn.onclick = () => {
-      const pwd = prompt("Enter password to delete:");
-      if (pwd === "admin123") {
-        patients.splice(editIndex.value, 1);
-        saveData();
-        render(patients);
-        closeModal();
-      } else alert("Incorrect password!");
-    };
+deleteBtn.onclick = () => {
+  const pwd = prompt("Enter password to delete:");
+  if (pwd === "admin123") {
+    patients.splice(editIndex.value, 1);
+    savePatients();
+    renderPatients();
+    closePatientModal();
+  } else alert("Incorrect password!");
+};
 
-    document.getElementById('cancelBtn').onclick = closeModal;
-    document.getElementById('addBtn').onclick = () => openModal();
-    window.onclick = e => { if (e.target === modal) closeModal(); };
+document.getElementById('cancelBtn').onclick = closePatientModal;
+document.getElementById('addBtn').onclick = () => openPatientModal();
+window.onclick = e => { if (e.target === modal) closePatientModal(); };
 
-    // Search
-    document.getElementById('searchBtn').onclick = () => {
-      const q = document.getElementById('searchInput').value.toLowerCase();
-      render(patients.filter(p => p.name.toLowerCase().includes(q) || p.note.toLowerCase().includes(q)));
-    };
+// Search
+document.getElementById('searchBtn').onclick = () => {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  renderPatients(patients.filter(p =>
+    p.name.toLowerCase().includes(q) || p.note.toLowerCase().includes(q)
+  ));
+};
 
-    // Doctor dropdown
-    const doctorBtn = document.getElementById('doctorBtn');
-    const doctorDropdown = document.getElementById('doctorDropdown');
-    doctorBtn.onclick = () => doctorDropdown.classList.toggle('hidden');
-    window.addEventListener('click', e => {
-      if (!doctorBtn.contains(e.target) && !doctorDropdown.contains(e.target)) doctorDropdown.classList.add('hidden');
-    });
+// Doctor dropdown
+const doctorBtn = document.getElementById('doctorBtn');
+const doctorDropdown = document.getElementById('doctorDropdown');
+doctorBtn.onclick = () => doctorDropdown.classList.toggle('hidden');
+window.addEventListener('click', e => {
+  if (!doctorBtn.contains(e.target) && !doctorDropdown.contains(e.target)) doctorDropdown.classList.add('hidden');
+});
 
-    document.getElementById('profileBtn').onclick = () => alert("Doctor Profile Page (coming soon)");
-    document.getElementById('settingsBtn').onclick = () => alert("Settings Page (coming soon)");
-    document.getElementById('logoutBtn').onclick = () => {
-      if (confirm("Log out of SmartDent ERP?")) alert("Logged out successfully!");
-    };
+document.getElementById('profileBtn').onclick = () => alert("Doctor Profile Page (coming soon)");
+document.getElementById('settingsBtn').onclick = () => alert("Settings Page (coming soon)");
+document.getElementById('logoutBtn').onclick = () => {
+  if (confirm("Log out of SmartDent ERP?")) alert("Logged out successfully!");
+};
 
- 
 // ===== INVOICING LOGIC =====
 const invoiceModal = document.getElementById('invoiceModal');
 const invoiceForm = document.getElementById('invoiceForm');
 const invoiceDate = document.getElementById('invoiceDate');
 const invoicePatient = document.getElementById('invoicePatient');
-const invoiceDentist = document.getElementById('invoiceDentist'); // NEW
+const invoiceDentist = document.getElementById('invoiceDentist');
 const serviceList = document.getElementById('serviceList');
 const invoiceTotal = document.getElementById('invoiceTotal');
 
-let invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
 
-// Open modal
 function openInvoiceModal() {
   renderPatientOptions();
-  renderDentistOptions(); // NEW
+  renderDentistOptions();
   invoiceDate.value = new Date().toISOString().split('T')[0];
   invoiceModal.classList.remove('hidden');
   invoiceModal.classList.add('flex');
 }
 
-// Close modal
 function closeInvoiceModal() {
   invoiceModal.classList.add('hidden');
   invoiceModal.classList.remove('flex');
 }
 
-// Click outside to close
 invoiceModal.addEventListener('click', e => {
   if (e.target === invoiceModal) closeInvoiceModal();
 });
 
-// Render patients in dropdown
 function renderPatientOptions() {
-  const patients = JSON.parse(localStorage.getItem('patients') || '[]');
   invoicePatient.innerHTML = '<option value="">Select Patient</option>';
   patients.forEach(p => {
     const opt = document.createElement('option');
@@ -1102,7 +1100,6 @@ function renderPatientOptions() {
   });
 }
 
-// Render dentists in dropdown
 function renderDentistOptions() {
   const dentists = JSON.parse(localStorage.getItem('dentists') || '[]');
   invoiceDentist.innerHTML = '<option value="">Select Dentist</option>';
@@ -1114,7 +1111,6 @@ function renderDentistOptions() {
   });
 }
 
-// Add service line
 function addServiceLine() {
   const div = document.createElement('div');
   div.className = 'flex gap-2';
@@ -1125,44 +1121,42 @@ function addServiceLine() {
   serviceList.appendChild(div);
 }
 
-// Calculate total dynamically
 serviceList.addEventListener('input', () => {
   const amounts = [...serviceList.querySelectorAll('input[type="number"]')].map(i => parseFloat(i.value) || 0);
-  const total = amounts.reduce((a,b)=>a+b,0);
-  invoiceTotal.textContent = `$${total.toFixed(2)}`;
+  invoiceTotal.textContent = `$${amounts.reduce((a,b)=>a+b,0).toFixed(2)}`;
 });
 
-// Save invoice
 invoiceForm.addEventListener('submit', e => {
   e.preventDefault();
   const patient = invoicePatient.value;
-  const dentist = invoiceDentist.value; // NEW
+  const dentist = invoiceDentist.value;
   const date = invoiceDate.value;
   const services = [...serviceList.querySelectorAll('div')].map(div => {
     const [desc, amt] = div.querySelectorAll('input');
-    return { desc: desc.value, amt: parseFloat(amt.value) || 0 };
+    return { desc: desc.value.trim(), amt: parseFloat(amt.value) || 0 };
   });
   const total = services.reduce((a,b)=>a+b.amt,0);
 
-  if(!patient || !dentist || services.length === 0) { // validation includes dentist
+  if (!patient || !dentist || services.length === 0) {
     alert('Please fill in all details');
     return;
   }
 
-  invoices.push({ patient, dentist, date, services, total }); // include dentist
+  invoices.push({ patient, dentist, date, services, total });
   localStorage.setItem('invoices', JSON.stringify(invoices));
 
   alert(`Invoice saved for ${patient} by Dr. ${dentist}`);
   closeInvoiceModal();
 });
 
+// Quick Actions
+document.getElementById('scheduleBtn').onclick = () => alert("Schedule module loading…");
+document.getElementById('manageBtn').onclick = () => openPatientModal();
+document.getElementById('invoiceBtn').onclick = () => openInvoiceModal();
 
-    // Quick Actions
-    document.getElementById('scheduleBtn').onclick = () => alert("Schedule module loading…");
-    document.getElementById('manageBtn').onclick = openPatientModal;
-    document.getElementById('invoiceBtn').onclick = () => alert("Redirecting to invoicing…");
+// Initialize
+renderPatients();
+</script>
 
-    render(patients);
-  </script>
 </body>
 </html>
