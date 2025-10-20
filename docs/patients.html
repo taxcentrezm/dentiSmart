@@ -784,6 +784,14 @@ video {
   -moz-user-focus: none;
 }
 
+    @keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out;
+}
+
   </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 antialiased">
@@ -853,7 +861,9 @@ video {
           <div class="grid gap-3">
             <button id="scheduleBtn" class="flex items-center gap-3 px-4 py-2 rounded-lg bg-indigo-50 hover:bg-indigo-100"><i data-feather="calendar"></i> Schedule</button>
             <button id="manageBtn" class="flex items-center gap-3 px-4 py-2 rounded-lg bg-green-50 hover:bg-green-100"><i data-feather="users"></i> Manage Patients</button>
-            <button id="invoiceBtn" class="flex items-center gap-3 px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100"><i data-feather="file-text"></i> Invoicing</button>
+           <button onclick="openInvoiceModal()" class="flex items-center gap-3 px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100">
+  <i data-feather="file-text"></i> Invoicing
+</button>
           </div>
         </div>
       </aside>
@@ -886,6 +896,53 @@ video {
       </form>
     </div>
   </div>
+
+  <!-- INVOICE MODAL -->
+<div id="invoiceModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50">
+  <div class="bg-white/80 rounded-2xl shadow-xl w-full max-w-lg p-6 animate-fadeIn">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-semibold">Create Invoice</h2>
+      <button onclick="closeInvoiceModal()" class="text-gray-500 hover:text-rose-600">
+        <i data-feather="x"></i>
+      </button>
+    </div>
+
+    <form id="invoiceForm" class="space-y-4">
+      <div>
+        <label class="text-sm font-medium">Patient</label>
+        <select id="invoicePatient" class="w-full border rounded-md px-3 py-2">
+          <option value="">Select Patient</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-sm font-medium">Date</label>
+        <input id="invoiceDate" type="date" class="w-full border rounded-md px-3 py-2">
+      </div>
+
+      <div>
+        <label class="text-sm font-medium">Services</label>
+        <div id="serviceList" class="space-y-2">
+          <div class="flex gap-2">
+            <input type="text" placeholder="Service Description" class="flex-1 border rounded-md px-2 py-1">
+            <input type="number" placeholder="Amount" class="w-24 border rounded-md px-2 py-1 text-right">
+          </div>
+        </div>
+        <button type="button" onclick="addServiceLine()" class="text-sm text-indigo-600 mt-2">+ Add Service</button>
+      </div>
+
+      <div class="flex justify-between font-semibold border-t pt-2">
+        <span>Total:</span>
+        <span id="invoiceTotal">$0.00</span>
+      </div>
+
+      <div class="flex justify-end gap-3">
+        <button type="button" onclick="closeInvoiceModal()" class="px-3 py-2 bg-gray-100 rounded-md">Cancel</button>
+        <button type="submit" class="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Save Invoice</button>
+      </div>
+    </form>
+  </div>
+</div>
 
   <script>
     feather.replace();
@@ -1001,9 +1058,91 @@ video {
       if (confirm("Log out of SmartDent ERP?")) alert("Logged out successfully!");
     };
 
+    // ===== INVOICING LOGIC =====
+const invoiceModal = document.getElementById('invoiceModal');
+const invoiceForm = document.getElementById('invoiceForm');
+const invoiceDate = document.getElementById('invoiceDate');
+const invoicePatient = document.getElementById('invoicePatient');
+const serviceList = document.getElementById('serviceList');
+const invoiceTotal = document.getElementById('invoiceTotal');
+
+let invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+
+// Open modal
+function openInvoiceModal() {
+  renderPatientOptions();
+  invoiceDate.value = new Date().toISOString().split('T')[0];
+  invoiceModal.classList.remove('hidden');
+  invoiceModal.classList.add('flex');
+}
+
+// Close modal
+function closeInvoiceModal() {
+  invoiceModal.classList.add('hidden');
+  invoiceModal.classList.remove('flex');
+}
+
+// Click outside to close
+invoiceModal.addEventListener('click', e => {
+  if (e.target === invoiceModal) closeInvoiceModal();
+});
+
+// Render patients in dropdown
+function renderPatientOptions() {
+  const patients = JSON.parse(localStorage.getItem('patients') || '[]');
+  invoicePatient.innerHTML = '<option value="">Select Patient</option>';
+  patients.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.name;
+    opt.textContent = p.name;
+    invoicePatient.appendChild(opt);
+  });
+}
+
+// Add service line
+function addServiceLine() {
+  const div = document.createElement('div');
+  div.className = 'flex gap-2';
+  div.innerHTML = `
+    <input type="text" placeholder="Service Description" class="flex-1 border rounded-md px-2 py-1">
+    <input type="number" placeholder="Amount" class="w-24 border rounded-md px-2 py-1 text-right">
+  `;
+  serviceList.appendChild(div);
+}
+
+// Calculate total dynamically
+serviceList.addEventListener('input', () => {
+  const amounts = [...serviceList.querySelectorAll('input[type="number"]')].map(i => parseFloat(i.value) || 0);
+  const total = amounts.reduce((a,b)=>a+b,0);
+  invoiceTotal.textContent = `$${total.toFixed(2)}`;
+});
+
+// Save invoice
+invoiceForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const patient = invoicePatient.value;
+  const date = invoiceDate.value;
+  const services = [...serviceList.querySelectorAll('div')].map(div => {
+    const [desc, amt] = div.querySelectorAll('input');
+    return { desc: desc.value, amt: parseFloat(amt.value) || 0 };
+  });
+  const total = services.reduce((a,b)=>a+b.amt,0);
+
+  if(!patient || services.length === 0) {
+    alert('Please fill in all details');
+    return;
+  }
+
+  invoices.push({ patient, date, services, total });
+  localStorage.setItem('invoices', JSON.stringify(invoices));
+
+  alert(`Invoice saved for ${patient}`);
+  closeInvoiceModal();
+});
+
     // Quick Actions
     document.getElementById('scheduleBtn').onclick = () => alert("Schedule module loading…");
-    document.getElementById('manageBtn').onclick = () => alert("Opening patient management…");
+    document.getElementById('manageBtn').onclick = openPatientModal;
     document.getElementById('invoiceBtn').onclick = () => alert("Redirecting to invoicing…");
 
     render(patients);
