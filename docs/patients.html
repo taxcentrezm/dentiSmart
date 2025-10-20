@@ -1058,11 +1058,13 @@ video {
       if (confirm("Log out of SmartDent ERP?")) alert("Logged out successfully!");
     };
 
-    // ===== INVOICING LOGIC =====
+ 
+// ===== INVOICING LOGIC =====
 const invoiceModal = document.getElementById('invoiceModal');
 const invoiceForm = document.getElementById('invoiceForm');
 const invoiceDate = document.getElementById('invoiceDate');
 const invoicePatient = document.getElementById('invoicePatient');
+const invoiceDentist = document.getElementById('invoiceDentist'); // NEW
 const serviceList = document.getElementById('serviceList');
 const invoiceTotal = document.getElementById('invoiceTotal');
 
@@ -1071,6 +1073,7 @@ let invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
 // Open modal
 function openInvoiceModal() {
   renderPatientOptions();
+  renderDentistOptions(); // NEW
   invoiceDate.value = new Date().toISOString().split('T')[0];
   invoiceModal.classList.remove('hidden');
   invoiceModal.classList.add('flex');
@@ -1099,6 +1102,18 @@ function renderPatientOptions() {
   });
 }
 
+// Render dentists in dropdown
+function renderDentistOptions() {
+  const dentists = JSON.parse(localStorage.getItem('dentists') || '[]');
+  invoiceDentist.innerHTML = '<option value="">Select Dentist</option>';
+  dentists.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d.name;
+    opt.textContent = d.name;
+    invoiceDentist.appendChild(opt);
+  });
+}
+
 // Add service line
 function addServiceLine() {
   const div = document.createElement('div');
@@ -1121,6 +1136,7 @@ serviceList.addEventListener('input', () => {
 invoiceForm.addEventListener('submit', e => {
   e.preventDefault();
   const patient = invoicePatient.value;
+  const dentist = invoiceDentist.value; // NEW
   const date = invoiceDate.value;
   const services = [...serviceList.querySelectorAll('div')].map(div => {
     const [desc, amt] = div.querySelectorAll('input');
@@ -1128,17 +1144,18 @@ invoiceForm.addEventListener('submit', e => {
   });
   const total = services.reduce((a,b)=>a+b.amt,0);
 
-  if(!patient || services.length === 0) {
+  if(!patient || !dentist || services.length === 0) { // validation includes dentist
     alert('Please fill in all details');
     return;
   }
 
-  invoices.push({ patient, date, services, total });
+  invoices.push({ patient, dentist, date, services, total }); // include dentist
   localStorage.setItem('invoices', JSON.stringify(invoices));
 
-  alert(`Invoice saved for ${patient}`);
+  alert(`Invoice saved for ${patient} by Dr. ${dentist}`);
   closeInvoiceModal();
 });
+
 
     // Quick Actions
     document.getElementById('scheduleBtn').onclick = () => alert("Schedule module loading…");
