@@ -860,7 +860,7 @@ video {
           <h3 class="font-semibold mb-3">Quick Actions</h3>
           <div class="grid gap-3">
             <button id="scheduleBtn" class="flex items-center gap-3 px-4 py-2 rounded-lg bg-indigo-50 hover:bg-indigo-100"><i data-feather="calendar"></i> Schedule</button>
-            <button id="manageBtn" class="flex items-center gap-3 px-4 py-2 rounded-lg bg-green-50 hover:bg-green-100"><i data-feather="users"></i> Manage Patients</button>
+            <button id="manageBtn" class="flex items-center gap-3 px-4 py-2 rounded-lg bg-green-50 hover:bg-green-100"><i data-feather="users"></i> >Manage Patients</button>
            <button onclick="openInvoiceModal()" class="flex items-center gap-3 px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100">
   <i data-feather="file-text"></i> Invoicing
 </button>
@@ -898,51 +898,42 @@ video {
   </div>
 
   <!-- INVOICE MODAL -->
-<div id="invoiceModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50">
-  <div class="bg-white/80 rounded-2xl shadow-xl w-full max-w-lg p-6 animate-fadeIn">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-lg font-semibold">Create Invoice</h2>
-      <button onclick="closeInvoiceModal()" class="text-gray-500 hover:text-rose-600">
-        <i data-feather="x"></i>
+<!-- New Invoice Modal -->
+<div id="invoiceModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+  <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+    <h3 class="text-lg font-semibold mb-4">Create Invoice</h3>
+    <form id="invoiceForm" class="space-y-3">
+      <!-- Patient -->
+      <select id="invoicePatient" class="w-full px-3 py-2 border rounded-md">
+        <option value="">Select Patient</option>
+      </select>
+
+      <!-- Dentist -->
+      <select id="invoiceDentist" class="w-full px-3 py-2 border rounded-md">
+        <option value="">Select Dentist</option>
+      </select>
+
+      <!-- Invoice Date -->
+      <input id="invoiceDate" type="date" class="w-full px-3 py-2 border rounded-md">
+
+      <!-- Services -->
+      <div id="serviceList" class="space-y-2"></div>
+      <button type="button" onclick="addServiceLine()" class="px-3 py-2 bg-rose-50 rounded-md hover:bg-rose-100 text-sm">
+        + Add Service
       </button>
-    </div>
 
-    <form id="invoiceForm" class="space-y-4">
-      <div>
-        <label class="text-sm font-medium">Patient</label>
-        <select id="invoicePatient" class="w-full border rounded-md px-3 py-2">
-          <option value="">Select Patient</option>
-        </select>
-      </div>
+      <!-- Total -->
+      <div class="mt-2 text-right font-semibold">Total: <span id="invoiceTotal">$0.00</span></div>
 
-      <div>
-        <label class="text-sm font-medium">Date</label>
-        <input id="invoiceDate" type="date" class="w-full border rounded-md px-3 py-2">
-      </div>
-
-      <div>
-        <label class="text-sm font-medium">Services</label>
-        <div id="serviceList" class="space-y-2">
-          <div class="flex gap-2">
-            <input type="text" placeholder="Service Description" class="flex-1 border rounded-md px-2 py-1">
-            <input type="number" placeholder="Amount" class="w-24 border rounded-md px-2 py-1 text-right">
-          </div>
-        </div>
-        <button type="button" onclick="addServiceLine()" class="text-sm text-indigo-600 mt-2">+ Add Service</button>
-      </div>
-
-      <div class="flex justify-between font-semibold border-t pt-2">
-        <span>Total:</span>
-        <span id="invoiceTotal">$0.00</span>
-      </div>
-
-      <div class="flex justify-end gap-3">
-        <button type="button" onclick="closeInvoiceModal()" class="px-3 py-2 bg-gray-100 rounded-md">Cancel</button>
-        <button type="submit" class="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Save Invoice</button>
+      <!-- Actions -->
+      <div class="mt-4 flex justify-end gap-2">
+        <button type="button" onclick="closeInvoiceModal()" class="px-4 py-2 border rounded-md">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-rose-600 text-white rounded-md">Save Invoice</button>
       </div>
     </form>
   </div>
 </div>
+
 
 <script>
 feather.replace();
@@ -1150,9 +1141,11 @@ invoiceForm.addEventListener('submit', e => {
 });
 
 // Quick Actions
-document.getElementById('scheduleBtn').onclick = () => alert("Schedule module loading…");
-document.getElementById('manageBtn').onclick = () => openPatientModal();
-document.getElementById('invoiceBtn').onclick = () => openInvoiceModal();
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('manageBtn').onclick = openPatientModal;
+  document.getElementById('scheduleBtn').onclick = () => alert("Schedule module loading…");
+  document.getElementById('invoiceBtn').onclick = () => alert("Redirecting to invoicing…");
+});
 
 // Initialize
 renderPatients();
