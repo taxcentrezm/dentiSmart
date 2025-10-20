@@ -7,19 +7,14 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/feather-icons"></script>
   <style>
-    /* ========================
-       Global Styles
-    ======================== */
     body { font-family: 'Inter', sans-serif; background: #f9fafb; }
     .card { @apply bg-white rounded-2xl shadow p-4; }
 
-    /* ========================
-       Glass Modal
-    ======================== */
+    /* Glass Modal */
     .modal {
       position: fixed; inset: 0; display: none;
       align-items: center; justify-content: center;
-      background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(6px);
+      background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(6px);
       animation: fadeIn 0.25s ease forwards;
     }
     .modal.show { display: flex; }
@@ -30,8 +25,19 @@
     @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
     @keyframes scaleIn { from {opacity: 0; transform: scale(0.95);} to {opacity: 1; transform: scale(1);} }
 
-    .status-pill {
-      @apply px-2 py-0.5 text-xs font-semibold rounded-full;
+    .status-pill { @apply px-2 py-0.5 text-xs font-semibold rounded-full; }
+
+    /* Dropdown */
+    .dropdown-menu {
+      position: absolute;
+      right: 0;
+      top: 110%;
+      @apply bg-white/90 backdrop-blur-md rounded-xl shadow-md w-40 hidden transition-all;
+      animation: fadeIn 0.2s ease;
+    }
+    .dropdown-menu.show { display: block; }
+    .dropdown-item {
+      @apply px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer flex items-center gap-2;
     }
   </style>
 </head>
@@ -43,15 +49,35 @@
       <h1 class="text-lg font-semibold flex items-center gap-2">
         <i data-feather="users"></i> SmartDent ERP
       </h1>
-      <button id="addPatientBtn" class="bg-white/90 text-indigo-600 px-3 py-2 rounded-md flex items-center gap-2 shadow hover:bg-white">
-        <i data-feather="plus-circle"></i> Add Patient
-      </button>
+
+      <div class="flex items-center gap-3">
+        <button id="addPatientBtn" class="bg-white/90 text-indigo-600 px-3 py-2 rounded-md flex items-center gap-2 shadow hover:bg-white">
+          <i data-feather="plus-circle"></i> Add Patient
+        </button>
+
+        <!-- Doctor dropdown -->
+        <div class="relative">
+          <button id="doctorBtn" class="flex items-center gap-2 bg-white/90 px-3 py-2 rounded-full shadow-sm hover:bg-white">
+            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=100&auto=format&fit=crop"
+                 class="w-8 h-8 rounded-full object-cover">
+            <span class="hidden md:inline-block text-sm text-indigo-700 font-medium">Dr. Phiri</span>
+            <i data-feather="chevron-down" class="text-indigo-700"></i>
+          </button>
+          <div id="doctorMenu" class="dropdown-menu">
+            <div class="dropdown-item"><i data-feather="user"></i> Profile</div>
+            <div class="dropdown-item"><i data-feather="settings"></i> Settings</div>
+            <div class="dropdown-item text-rose-600"><i data-feather="log-out"></i> Logout</div>
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
   <!-- Main -->
-  <main class="container mx-auto px-4 py-8">
-    <section class="card">
+  <main class="container mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <!-- Patient List -->
+    <section class="lg:col-span-2 card">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">Patient Records</h2>
         <div class="flex gap-2">
@@ -61,7 +87,38 @@
       </div>
       <ul id="patientList" class="divide-y divide-gray-100"></ul>
     </section>
+
+    <!-- Sidebar -->
+    <aside class="space-y-6">
+      <div class="card">
+        <h3 class="font-semibold mb-3">Appointments Summary</h3>
+        <ul class="space-y-2 text-sm">
+          <li class="flex justify-between"><span>Today</span><span>38</span></li>
+          <li class="flex justify-between"><span>Pending</span><span>5</span></li>
+          <li class="flex justify-between"><span>Upcoming</span><span>12</span></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3 class="font-semibold mb-3">Quick Actions</h3>
+        <div class="grid gap-3">
+          <button class="flex items-center gap-3 px-4 py-2 rounded-lg bg-indigo-50 hover:bg-indigo-100">
+            <i data-feather="calendar"></i> Schedule
+          </button>
+          <button class="flex items-center gap-3 px-4 py-2 rounded-lg bg-green-50 hover:bg-green-100">
+            <i data-feather="users"></i> Manage Patients
+          </button>
+          <button class="flex items-center gap-3 px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100">
+            <i data-feather="file-text"></i> Invoicing
+          </button>
+        </div>
+      </div>
+    </aside>
   </main>
+
+  <footer class="mt-8 text-sm text-gray-500 text-center">
+    SmartDent ERP • Patient Management Simplified
+  </footer>
 
   <!-- Modal -->
   <div id="patientModal" class="modal">
@@ -99,15 +156,9 @@
   <script>
     feather.replace();
 
-    // ============================
-    // Configuration
-    // ============================
     const ADMIN_PASSWORD = "admin123";
     let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
-    // ============================
-    // Modal Logic
-    // ============================
     const modal = document.getElementById("patientModal");
     const form = document.getElementById("patientForm");
     const modalTitle = document.getElementById("modalTitle");
@@ -115,6 +166,9 @@
     const cancelBtn = document.getElementById("cancelBtn");
     const addBtn = document.getElementById("addPatientBtn");
 
+    // =======================
+    // Modal Logic
+    // =======================
     function openModal(isEdit = false, index = null) {
       modal.classList.add("show");
       deleteBtn.classList.toggle("hidden", !isEdit);
@@ -141,9 +195,9 @@
     cancelBtn.addEventListener("click", closeModal);
     addBtn.addEventListener("click", () => openModal(false));
 
-    // ============================
-    // Render Patients
-    // ============================
+    // =======================
+    // Render Logic
+    // =======================
     function render(list = patients) {
       const ul = document.getElementById("patientList");
       ul.innerHTML = "";
@@ -174,12 +228,10 @@
       });
     }
 
-    // ============================
-    // Save & Delete Logic
-    // ============================
-    function savePatients() {
-      localStorage.setItem("patients", JSON.stringify(patients));
-    }
+    // =======================
+    // Save / Delete
+    // =======================
+    function savePatients() { localStorage.setItem("patients", JSON.stringify(patients)); }
 
     form.addEventListener("submit", e => {
       e.preventDefault();
@@ -211,12 +263,24 @@
       }
     });
 
-    // ============================
-    // Search Logic
-    // ============================
+    // =======================
+    // Search
+    // =======================
     document.getElementById("searchBtn").addEventListener("click", () => {
       const q = document.getElementById("searchInput").value.toLowerCase().trim();
       render(patients.filter(p => p.name.toLowerCase().includes(q) || p.note.toLowerCase().includes(q)));
+    });
+
+    // =======================
+    // Doctor Dropdown
+    // =======================
+    const doctorBtn = document.getElementById("doctorBtn");
+    const doctorMenu = document.getElementById("doctorMenu");
+    doctorBtn.addEventListener("click", () => doctorMenu.classList.toggle("show"));
+    document.addEventListener("click", e => {
+      if (!doctorBtn.contains(e.target) && !doctorMenu.contains(e.target)) {
+        doctorMenu.classList.remove("show");
+      }
     });
 
     render();
