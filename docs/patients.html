@@ -868,6 +868,24 @@ video {
     </div>
   </main>
 
+  <!-- Upcoming Appointments -->
+<div class="card mt-6">
+  <h3 class="font-semibold mb-3">Upcoming Appointments</h3>
+  <table class="w-full table-auto border-collapse border border-gray-200">
+    <thead class="bg-gray-100">
+      <tr>
+        <th class="border px-3 py-2 text-left">Patient</th>
+        <th class="border px-3 py-2 text-left">Dentist</th>
+        <th class="border px-3 py-2 text-left">Date</th>
+        <th class="border px-3 py-2 text-left">Time</th>
+      </tr>
+    </thead>
+    <tbody id="appointmentsTableBody">
+      <!-- Appointments will be injected here -->
+    </tbody>
+  </table>
+</div>
+
   <footer class="mt-8 text-sm text-gray-500 text-center">
     SmartDent ERP • Patient Management Simplified
   </footer>
@@ -921,6 +939,30 @@ video {
       <div class="mt-4 flex justify-end gap-2">
         <button type="button" onclick="closeInvoiceModal()" class="px-4 py-2 border rounded-md">Cancel</button>
         <button type="submit" class="px-4 py-2 bg-rose-600 text-white rounded-md">Save Invoice</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+  <!-- Schedule Appointment Modal -->
+<div id="scheduleModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md relative">
+    <button onclick="closeScheduleModal()" class="absolute top-3 right-3 text-gray-500">
+      <i data-feather="x"></i>
+    </button>
+    <h3 class="text-lg font-semibold mb-4">Schedule Appointment</h3>
+    <form id="scheduleForm" class="space-y-3">
+      <select id="schedulePatient" class="w-full px-3 py-2 border rounded-md">
+        <option value="">Select Patient</option>
+      </select>
+      <input type="date" id="scheduleDate" class="w-full px-3 py-2 border rounded-md" />
+      <input type="time" id="scheduleTime" class="w-full px-3 py-2 border rounded-md" />
+      <select id="scheduleDentist" class="w-full px-3 py-2 border rounded-md">
+        <option value="">Select Dentist</option>
+      </select>
+      <div class="flex justify-end gap-2 mt-4">
+        <button type="button" onclick="closeScheduleModal()" class="px-4 py-2 border rounded-md">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md">Schedule</button>
       </div>
     </form>
   </div>
@@ -1147,13 +1189,152 @@ if (invoiceForm) {
   });
 }
 
+  // ===== SCHEDULE APPOINTMENT LOGIC =====
+const scheduleModal = document.getElementById('scheduleModal');
+const scheduleForm = document.getElementById('scheduleForm');
+const schedulePatient = document.getElementById('schedulePatient');
+const scheduleDentist = document.getElementById('scheduleDentist');
+const scheduleDate = document.getElementById('scheduleDate');
+const scheduleTime = document.getElementById('scheduleTime');
+
+function openScheduleModal() {
+  // Populate patients
+  schedulePatient.innerHTML = '<option value="">Select Patient</option>';
+  patients.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.name;
+    opt.textContent = p.name;
+    schedulePatient.appendChild(opt);
+  });
+
+  // Populate dentists
+  let dentists = JSON.parse(localStorage.getItem('dentists') || '[]');
+  if (dentists.length === 0) {
+    dentists = [{name: "Dr. Phiri"}, {name: "Dr. Mwale"}];
+    localStorage.setItem('dentists', JSON.stringify(dentists));
+  }
+  scheduleDentist.innerHTML = '<option value="">Select Dentist</option>';
+  dentists.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d.name;
+    opt.textContent = d.name;
+    scheduleDentist.appendChild(opt);
+  });
+
+  // Set current date/time defaults
+  scheduleDate.value = new Date().toISOString().split('T')[0];
+  scheduleTime.value = "09:00";
+
+  scheduleModal.classList.remove('hidden');
+  scheduleModal.classList.add('flex');
+}
+
+function closeScheduleModal() {
+  scheduleModal.classList.add('hidden');
+  scheduleModal.classList.remove('flex');
+}
+
+if (scheduleModal) {
+  scheduleModal.addEventListener('click', e => {
+    if (e.target === scheduleModal) closeScheduleModal();
+  });
+}
+
+// Handle schedule form submission
+if (scheduleForm) {
+  scheduleForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const patient = schedulePatient.value;
+    const dentist = scheduleDentist.value;
+    const date = scheduleDate.value;
+    const time = scheduleTime.value;
+
+    if (!patient || !dentist || !date || !time) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    // Demo: forward appointment to patient email
+    alert(`Appointment for ${patient} with ${dentist} on ${date} at ${time} has been forwarded to patient's email.`);
+
+    closeScheduleModal();
+  });
+}
+
+// Connect quick action button
+document.addEventListener('DOMContentLoaded', () => {
+  const scheduleBtn = document.getElementById('scheduleBtn');
+  if (scheduleBtn) scheduleBtn.onclick = openScheduleModal;
+});
+
+
+  // ===== APPOINTMENTS TRACKING =====
+let appointments = JSON.parse(localStorage.getItem('appointments') || '[]');
+
+const appointmentsTableBody = document.getElementById('appointmentsTableBody');
+
+function saveAppointments() {
+  localStorage.setItem('appointments', JSON.stringify(appointments));
+}
+
+function renderAppointments() {
+  if (!appointmentsTableBody) return;
+  appointmentsTableBody.innerHTML = '';
+  if (appointments.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="4" class="text-center p-3 text-gray-500">No upcoming appointments</td>`;
+    appointmentsTableBody.appendChild(tr);
+    return;
+  }
+
+  appointments.forEach(a => {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-gray-50';
+    tr.innerHTML = `
+      <td class="border px-3 py-2">${a.patient}</td>
+      <td class="border px-3 py-2">${a.dentist}</td>
+      <td class="border px-3 py-2">${a.date}</td>
+      <td class="border px-3 py-2">${a.time}</td>
+    `;
+    appointmentsTableBody.appendChild(tr);
+  });
+}
+
+// Update schedule form submission to save and render appointments
+if (scheduleForm) {
+  scheduleForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const patient = schedulePatient.value;
+    const dentist = scheduleDentist.value;
+    const date = scheduleDate.value;
+    const time = scheduleTime.value;
+
+    if (!patient || !dentist || !date || !time) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    // Save appointment
+    appointments.push({ patient, dentist, date, time });
+    saveAppointments();
+    renderAppointments();
+
+    // Demo alert
+    alert(`Appointment for ${patient} with ${dentist} on ${date} at ${time} has been forwarded to patient's email.`);
+
+    closeScheduleModal();
+  });
+}
+
+// Render on page load
+document.addEventListener('DOMContentLoaded', renderAppointments);
+
 // Quick Actions
 document.addEventListener('DOMContentLoaded', () => {
   const manageBtn = document.getElementById('manageBtn');
-  const scheduleBtn = document.getElementById('scheduleBtn');
+
 
   if (manageBtn) manageBtn.onclick = openPatientModal;
-  if (scheduleBtn) scheduleBtn.onclick = () => alert("Schedule module loading…");
 });
 
 // Initialize
