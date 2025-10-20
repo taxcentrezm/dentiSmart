@@ -6,6 +6,68 @@
   <title>SmartDent ERP — Patients</title>
   <script src="https://unpkg.com/feather-icons"></script>
   <style>
+/* Schedule Modal */
+#scheduleModal {
+  @apply fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50;
+}
+
+#scheduleModal .modal-content {
+  @apply bg-white rounded-xl shadow-lg p-6 w-full max-w-md relative;
+}
+
+#scheduleModal .modal-header {
+  @apply text-lg font-semibold mb-4;
+}
+
+#scheduleModal button.close-btn {
+  @apply absolute top-3 right-3 text-gray-500;
+}
+
+#scheduleModal input, #scheduleModal select {
+  @apply w-full px-3 py-2 border rounded-md mb-3;
+}
+
+#scheduleModal .modal-actions button {
+  @apply px-4 py-2 rounded-md;
+}
+
+#scheduleModal .modal-actions .cancel-btn {
+  @apply border;
+}
+
+#scheduleModal .modal-actions .save-btn {
+  @apply bg-indigo-600 text-white;
+}
+
+
+    /* Upcoming Appointments Table */
+#appointmentsTableBody tr:hover {
+  @apply bg-gray-50;
+}
+
+#appointmentsTableBody td {
+  @apply border px-3 py-2 text-sm;
+}
+
+#appointmentsTableBody td:first-child {
+  @apply font-medium;
+}
+
+#appointmentsTableBody td[colspan="4"] {
+  @apply text-center text-gray-500 p-3;
+}
+
+.card h3 {
+  @apply font-semibold mb-3;
+}
+
+table {
+  @apply w-full table-auto border-collapse border border-gray-200;
+}
+
+thead th {
+  @apply bg-gray-100 border px-3 py-2 text-left text-sm font-medium;
+}
 
     .card { @apply bg-white rounded-2xl shadow p-4; }
     .glass {
