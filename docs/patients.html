@@ -901,29 +901,23 @@ video {
   <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
     <h3 class="text-lg font-semibold mb-4">Create Invoice</h3>
     <form id="invoiceForm" class="space-y-3">
-      <!-- Patient -->
-      <select id="invoicePatient" class="w-full px-3 py-2 border rounded-md">
-        <option value="">Select Patient</option>
-      </select>
-
-      <!-- Dentist -->
-      <select id="invoiceDentist" class="w-full px-3 py-2 border rounded-md">
-        <option value="">Select Dentist</option>
-      </select>
-
       <!-- Invoice Date -->
-      <input id="invoiceDate" type="date" class="w-full px-3 py-2 border rounded-md">
+      <input id="invoiceDate" type="date" class="w-full px-3 py-2 border rounded-md" />
 
-      <!-- Services -->
+      <!-- Patient Dropdown -->
+      <select id="invoicePatient" class="w-full px-3 py-2 border rounded-md"></select>
+
+      <!-- Dentist Dropdown -->
+      <select id="invoiceDentist" class="w-full px-3 py-2 border rounded-md"></select>
+
+      <!-- Service List -->
       <div id="serviceList" class="space-y-2"></div>
-      <button type="button" onclick="addServiceLine()" class="px-3 py-2 bg-rose-50 rounded-md hover:bg-rose-100 text-sm">
-        + Add Service
-      </button>
+      <button type="button" onclick="addServiceLine()" class="px-3 py-2 bg-gray-100 rounded-md">Add Service</button>
 
       <!-- Total -->
-      <div class="mt-2 text-right font-semibold">Total: <span id="invoiceTotal">$0.00</span></div>
+      <div class="text-right font-semibold">Total: <span id="invoiceTotal">$0.00</span></div>
 
-      <!-- Actions -->
+      <!-- Submit -->
       <div class="mt-4 flex justify-end gap-2">
         <button type="button" onclick="closeInvoiceModal()" class="px-4 py-2 border rounded-md">Cancel</button>
         <button type="submit" class="px-4 py-2 bg-rose-600 text-white rounded-md">Save Invoice</button>
@@ -933,14 +927,14 @@ video {
 </div>
 
 
+
 <script>
 feather.replace();
 
 // ===== PATIENT MANAGEMENT =====
-const modal = document.getElementById('patientModal');
-const form = document.getElementById('patientForm');
+const patientModal = document.getElementById('patientModal');
+const patientForm = document.getElementById('patientForm');
 const patientList = document.getElementById('patientList');
-const dateInput = document.getElementById('date');
 const deleteBtn = document.getElementById('deleteBtn');
 const editIndex = document.getElementById('editIndex');
 const modalTitle = document.getElementById('modalTitle');
@@ -955,10 +949,8 @@ function renderPatients(list = patients) {
   patientList.innerHTML = '';
   list.forEach((p, i) => {
     const initials = p.name.split(' ').map(s => s[0]).slice(0,2).join('');
-    const color =
-      p.status === 'Paid' ? 'text-green-600' :
-      p.status === 'Overdue' ? 'text-rose-600' :
-      'text-amber-600';
+    const color = p.status === 'Paid' ? 'text-green-600' :
+                  p.status === 'Overdue' ? 'text-rose-600' : 'text-amber-600';
     const li = document.createElement('li');
     li.className = 'flex items-center justify-between hover:bg-gray-50 p-2 rounded-lg cursor-pointer transition';
     li.innerHTML = `
@@ -977,36 +969,36 @@ function renderPatients(list = patients) {
 }
 
 function openPatientModal(index = null) {
-  modal.classList.add('active');
+  patientModal.classList.add('active');
   if (index !== null) {
     const p = patients[index];
     modalTitle.textContent = 'Edit Patient';
-    form.name.value = p.name;
-    form.note.value = p.note;
-    form.date.value = p.date;
-    form.status.value = p.status;
+    patientForm.name.value = p.name;
+    patientForm.note.value = p.note;
+    patientForm.date.value = p.date;
+    patientForm.status.value = p.status;
     editIndex.value = index;
     deleteBtn.classList.remove('hidden');
   } else {
     modalTitle.textContent = 'Add Patient';
-    form.reset();
-    form.date.value = new Date().toISOString().split('T')[0];
+    patientForm.reset();
+    patientForm.date.value = new Date().toISOString().split('T')[0];
     editIndex.value = '';
     deleteBtn.classList.add('hidden');
   }
 }
 
 function closePatientModal() {
-  modal.classList.remove('active');
+  patientModal.classList.remove('active');
 }
 
-form.onsubmit = e => {
+patientForm.onsubmit = e => {
   e.preventDefault();
   const data = {
-    name: form.name.value.trim(),
-    note: form.note.value.trim(),
-    date: form.date.value,
-    status: form.status.value
+    name: patientForm.name.value.trim(),
+    note: patientForm.note.value.trim(),
+    date: patientForm.date.value,
+    status: patientForm.status.value
   };
   if (editIndex.value !== '') patients[editIndex.value] = data;
   else patients.push(data);
@@ -1027,12 +1019,12 @@ deleteBtn.onclick = () => {
 
 document.getElementById('cancelBtn').onclick = closePatientModal;
 document.getElementById('addBtn').onclick = () => openPatientModal();
-window.onclick = e => { if (e.target === modal) closePatientModal(); };
+window.onclick = e => { if (e.target === patientModal) closePatientModal(); };
 
 // Search
 document.getElementById('searchBtn').onclick = () => {
   const q = document.getElementById('searchInput').value.toLowerCase();
-  renderPatients(patients.filter(p =>
+  renderPatients(patients.filter(p => 
     p.name.toLowerCase().includes(q) || p.note.toLowerCase().includes(q)
   ));
 };
@@ -1040,10 +1032,14 @@ document.getElementById('searchBtn').onclick = () => {
 // Doctor dropdown
 const doctorBtn = document.getElementById('doctorBtn');
 const doctorDropdown = document.getElementById('doctorDropdown');
-doctorBtn.onclick = () => doctorDropdown.classList.toggle('hidden');
-window.addEventListener('click', e => {
-  if (!doctorBtn.contains(e.target) && !doctorDropdown.contains(e.target)) doctorDropdown.classList.add('hidden');
-});
+if (doctorBtn && doctorDropdown) {
+  doctorBtn.onclick = () => doctorDropdown.classList.toggle('hidden');
+  window.addEventListener('click', e => {
+    if (!doctorBtn.contains(e.target) && !doctorDropdown.contains(e.target)) {
+      doctorDropdown.classList.add('hidden');
+    }
+  });
+}
 
 document.getElementById('profileBtn').onclick = () => alert("Doctor Profile Page (coming soon)");
 document.getElementById('settingsBtn').onclick = () => alert("Settings Page (coming soon)");
@@ -1075,11 +1071,14 @@ function closeInvoiceModal() {
   invoiceModal.classList.remove('flex');
 }
 
-invoiceModal.addEventListener('click', e => {
-  if (e.target === invoiceModal) closeInvoiceModal();
-});
+if (invoiceModal) {
+  invoiceModal.addEventListener('click', e => {
+    if (e.target === invoiceModal) closeInvoiceModal();
+  });
+}
 
 function renderPatientOptions() {
+  if (!invoicePatient) return;
   invoicePatient.innerHTML = '<option value="">Select Patient</option>';
   patients.forEach(p => {
     const opt = document.createElement('option');
@@ -1090,7 +1089,12 @@ function renderPatientOptions() {
 }
 
 function renderDentistOptions() {
-  const dentists = JSON.parse(localStorage.getItem('dentists') || '[]');
+  if (!invoiceDentist) return;
+  let dentists = JSON.parse(localStorage.getItem('dentists') || '[]');
+  if (dentists.length === 0) {
+    dentists = [{name: "Dr. Phiri"}, {name: "Dr. Mwale"}];
+    localStorage.setItem('dentists', JSON.stringify(dentists));
+  }
   invoiceDentist.innerHTML = '<option value="">Select Dentist</option>';
   dentists.forEach(d => {
     const opt = document.createElement('option');
@@ -1101,6 +1105,7 @@ function renderDentistOptions() {
 }
 
 function addServiceLine() {
+  if (!serviceList) return;
   const div = document.createElement('div');
   div.className = 'flex gap-2';
   div.innerHTML = `
@@ -1110,43 +1115,51 @@ function addServiceLine() {
   serviceList.appendChild(div);
 }
 
-serviceList.addEventListener('input', () => {
-  const amounts = [...serviceList.querySelectorAll('input[type="number"]')].map(i => parseFloat(i.value) || 0);
-  invoiceTotal.textContent = `$${amounts.reduce((a,b)=>a+b,0).toFixed(2)}`;
-});
-
-invoiceForm.addEventListener('submit', e => {
-  e.preventDefault();
-  const patient = invoicePatient.value;
-  const dentist = invoiceDentist.value;
-  const date = invoiceDate.value;
-  const services = [...serviceList.querySelectorAll('div')].map(div => {
-    const [desc, amt] = div.querySelectorAll('input');
-    return { desc: desc.value.trim(), amt: parseFloat(amt.value) || 0 };
+if (serviceList) {
+  serviceList.addEventListener('input', () => {
+    const amounts = [...serviceList.querySelectorAll('input[type="number"]')].map(i => parseFloat(i.value) || 0);
+    invoiceTotal.textContent = `$${amounts.reduce((a,b)=>a+b,0).toFixed(2)}`;
   });
-  const total = services.reduce((a,b)=>a+b.amt,0);
+}
 
-  if (!patient || !dentist || services.length === 0) {
-    alert('Please fill in all details');
-    return;
-  }
+if (invoiceForm) {
+  invoiceForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const patient = invoicePatient?.value;
+    const dentist = invoiceDentist?.value;
+    const date = invoiceDate?.value;
+    const services = [...serviceList.querySelectorAll('div')].map(div => {
+      const [desc, amt] = div.querySelectorAll('input');
+      return { desc: desc.value.trim(), amt: parseFloat(amt.value) || 0 };
+    });
+    const total = services.reduce((a,b)=>a+b.amt,0);
 
-  invoices.push({ patient, dentist, date, services, total });
-  localStorage.setItem('invoices', JSON.stringify(invoices));
+    if (!patient || !dentist || services.length === 0) {
+      alert('Please fill in all details');
+      return;
+    }
 
-  alert(`Invoice saved for ${patient} by Dr. ${dentist}`);
-  closeInvoiceModal();
-});
+    invoices.push({ patient, dentist, date, services, total });
+    localStorage.setItem('invoices', JSON.stringify(invoices));
+
+    alert(`Invoice saved for ${patient} by ${dentist}`);
+    closeInvoiceModal();
+  });
+}
 
 // Quick Actions
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('manageBtn').onclick = openPatientModal;
-  document.getElementById('scheduleBtn').onclick = () => alert("Schedule module loading…");
+  const manageBtn = document.getElementById('manageBtn');
+  const scheduleBtn = document.getElementById('scheduleBtn');
+
+  if (manageBtn) manageBtn.onclick = openPatientModal;
+  if (scheduleBtn) scheduleBtn.onclick = () => alert("Schedule module loading…");
 });
 
 // Initialize
 renderPatients();
 </script>
+
 
 </body>
 </html>
