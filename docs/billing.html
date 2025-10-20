@@ -111,6 +111,12 @@
     <h3 class="text-lg font-semibold mb-4">Create Invoice</h3>
     <div class="space-y-3">
       <input id="newInvName" type="text" placeholder="Patient Name" class="w-full px-3 py-2 border rounded-md" />
+      <select id="newInvDentist" class="w-full px-3 py-2 border rounded-md">
+  <option value="">Select Dentist</option>
+  <option value="Dr. Phiri">Dr. Phiri</option>
+  <option value="Dr. Banda">Dr. Banda</option>
+  <option value="Dr. Mwansa">Dr. Mwansa</option>
+</select>
       <input id="newInvService" type="text" placeholder="Service" class="w-full px-3 py-2 border rounded-md" />
       <input id="newInvAmount" type="number" placeholder="Amount" class="w-full px-3 py-2 border rounded-md" />
       <select id="newInvStatus" class="w-full px-3 py-2 border rounded-md">
@@ -167,19 +173,19 @@
       const initials = inv.name.split(' ').map(s => s[0]).slice(0, 2).join('');
       const li = document.createElement('li');
       li.className = 'flex items-center justify-between cursor-pointer hover:bg-gray-50 px-2 py-2 rounded-md';
-      li.innerHTML = `
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center font-semibold">${initials}</div>
-          <div>
-            <div class="font-medium">${inv.name}</div>
-            <div class="text-xs text-gray-500">${inv.service} — ${inv.date}</div>
-          </div>
-        </div>
-        <div class="text-right">
-          <div class="text-sm font-semibold">$${inv.amount}</div>
-          <div class="text-xs ${inv.status === 'Paid' ? 'text-green-600' : inv.status === 'Overdue' ? 'text-rose-600' : 'text-amber-600'}">${inv.status}</div>
-        </div>
-      `;
+     li.innerHTML = `
+  <div class="flex items-center gap-3">
+    <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center font-semibold">${initials}</div>
+    <div>
+      <div class="font-medium">${inv.name}</div>
+      <div class="text-xs text-gray-500">${inv.service} — ${inv.date} — ${inv.dentist}</div> <!-- Added dentist -->
+    </div>
+  </div>
+  <div class="text-right">
+    <div class="text-sm font-semibold">$${inv.amount}</div>
+    <div class="text-xs ${inv.status === 'Paid' ? 'text-green-600' : inv.status === 'Overdue' ? 'text-rose-600' : 'text-amber-600'}">${inv.status}</div>
+  </div>
+`;
       li.addEventListener('click', () => showInvoice(index));
       ul.appendChild(li);
     });
@@ -218,29 +224,31 @@
   }
 
   // Add new invoice
-  function addInvoice() {
+ function addInvoice() {
     const nameEl = document.getElementById('newInvName');
     const serviceEl = document.getElementById('newInvService');
     const amountEl = document.getElementById('newInvAmount');
     const statusEl = document.getElementById('newInvStatus');
+    const dentistEl = document.getElementById('newInvDentist'); // NEW
 
     const name = nameEl?.value?.trim();
     const service = serviceEl?.value?.trim();
     const amount = parseFloat(amountEl?.value);
     const status = statusEl?.value;
+    const dentist = dentistEl?.value?.trim(); // NEW
 
-    if (!name || !service || isNaN(amount)) {
+    if (!name || !service || isNaN(amount) || !dentist) {
       alert('Please fill all fields correctly.');
       return;
     }
 
     const today = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
     const id = 'INV-' + (invoices.length + 1).toString().padStart(4, '0');
-    invoices.unshift({ id, name, service, amount, date: today, status });
+    invoices.unshift({ id, name, dentist, service, amount, date: today, status }); // include dentist
     saveInvoices();
     closeModal();
     render(invoices);
-  }
+}
 
   // Show invoice detail
   function showInvoice(index) {
@@ -303,7 +311,7 @@
   const invService = inv.service || '';
   const invAmount = inv.amount?.toString() || '0';
   const invStatus = inv.status || '';
-
+  const invDentist = inv.dentist || 'Unknown';
   const img = new Image();
   img.crossOrigin = 'Anonymous';
   img.src = logoUrl;
@@ -322,11 +330,18 @@
     pdf.text(`Invoice #: ${invId}`, 15, 35);
     pdf.text(`Date: ${invDate}`, 15, 42);
 
-    // Patient Info
-    pdf.setFontSize(14);
-    pdf.text('Patient:', 15, 55);
-    pdf.setFontSize(12);
-    pdf.text(invName || 'Unknown', 35, 55);
+  
+// Patient Info
+pdf.setFontSize(14);
+pdf.text('Patient:', 15, 55);
+pdf.setFontSize(12);
+pdf.text(invName || 'Unknown', 35, 55);
+
+// Dentist Info
+pdf.setFontSize(14);
+pdf.text('Dentist:', 15, 65);
+pdf.setFontSize(12);
+pdf.text(invDentist, 35, 65);
 
     // Table Header
     pdf.setFillColor(245, 245, 245);
